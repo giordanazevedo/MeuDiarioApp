@@ -25,7 +25,7 @@ const mainMoods = [
   { label: 'Horrível', emoji: require('../../assets/images/emojisprincipal/horrivel.png'), color: '#b34fc5', value: 'Horrivel' },
 ];
 
-// 2. Opções Detalhadas para o Modal Dark
+// 2. Opções Detalhadas para o Modal Dark segunda pagina
 const emotionsList = [
   { id: '1', label: 'Feliz', icon: 'smile-beam' },
   { id: '2', label: 'Empolgado(a)', icon: 'grin-stars' },
