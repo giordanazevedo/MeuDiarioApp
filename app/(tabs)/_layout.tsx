@@ -17,12 +17,18 @@ function MenuOverlay({ visible, onClose }: { visible: boolean, onClose: () => vo
       <View style={styles.overlay}>
         {/* Linha Superior */}
         <View style={styles.menuRow}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => irParaTela('/nova_meta')}>
-            <View style={[styles.circle, { backgroundColor: '#E94D89' }]}>
-              <Ionicons name="flag" size={30} color="black" />
-            </View>
-            <Text style={styles.menuText}>Nova meta</Text>
-          </TouchableOpacity>
+    <TouchableOpacity 
+  style={styles.menuItem} 
+  onPress={() => {
+    onClose(); // Fecha o menu de bolinhas
+    router.push('/selecionar_categoria'); // ENTRA NA TELA DOS CARDS PRIMEIRO
+  }}
+>
+  <View style={[styles.circle, { backgroundColor: '#C12683' }]}>
+    <Ionicons name="calendar" size={30} color="black" />
+  </View>
+  <Text style={styles.menuText}>Dia importante novo</Text>
+</TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem} onPress={() => irParaTela('/novo_dia_importante')}>
             <View style={[styles.circle, { backgroundColor: '#C12683' }]}>
