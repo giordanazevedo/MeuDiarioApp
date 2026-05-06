@@ -1,73 +1,154 @@
+// app/(tabs)/Configurações.tsx
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Image,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function ConfiguraçõesScreen() {
-  // 1. Estados para controlar os botões de ligar/desligar
-  const [darkMode, setDarkMode] = useState(true);
-  const [notifications, setNotifications] = useState(false);
+export default function Configuracoes() {
+  const router = useRouter();
+  
+  const [tema, setTema] = useState('claro');
+  const [lembreteDiario, setLembreteDiario] = useState(false);
+  const [horarioLembrete, setHorarioLembrete] = useState('20:00');
+  const [alertaSistema, setAlertaSistema] = useState(true);
 
-  // 2. Função para o botão de sair
-  const handleLogout = () => {
-    Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Sair", onPress: () => console.log("Usuário deslogado") }
-    ]);
+  const fazerLogout = () => {
+    Alert.alert(
+      'Sair',
+      'Deseja realmente sair?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Sair', 
+          style: 'destructive',
+          onPress: () => router.replace('/start')
+        }
+      ]
+    );
   };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Título da Tela */}
-      <Text style={styles.mainTitle}>Configurações</Text>
-
-      {/* Seção: Preferências */}
-      <Text style={styles.sectionTitle}>Preferências</Text>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <View style={styles.labelArea}>
-            <Ionicons name="moon" size={20} color="#4a90e2" />
-            <Text style={styles.label}>Modo Escuro</Text>
+    <ScrollView style={[styles.container, tema === 'escuro' && styles.containerEscuro]}>
+      
+      {/* Seção 1: Perfil e Conta */}
+      <View style={styles.secao}>
+        
+        {/* Card do usuário COM IMAGEM */}
+        <View style={[styles.cardUsuario, tema === 'escuro' && styles.cardEscuro]}>
+          {/* Opção 1: Ícone (mais fácil) */}
+          <Ionicons name="person-circle" size={70} color="#007AFF" />
+          
+          <View style={styles.infoUsuario}>
+            <Text style={[styles.nomeUsuario, tema === 'escuro' && styles.textoBranco]}>
+              Juliana Souza
+            </Text>
+            <Text style={[styles.emailUsuario, tema === 'escuro' && styles.textoCinza]}>
+              juliana.souza@email.com
+            </Text>
           </View>
-          <Switch 
-            value={darkMode} 
-            onValueChange={setDarkMode}
-            trackColor={{ false: "#767577", true: "#4a90e2" }} 
-          />
         </View>
 
-        <View style={styles.row}>
-          <View style={styles.labelArea}>
-            <Ionicons name="notifications" size={20} color="#4a90e2" />
-            <Text style={styles.label}>Notificações</Text>
-          </View>
-          <Switch 
-            value={notifications} 
-            onValueChange={setNotifications}
-            trackColor={{ false: "#767577", true: "#4a90e2" }} 
-          />
-        </View>
-      </View>
-
-      {/* Seção: Conta */}
-      <Text style={styles.sectionTitle}>Conta</Text>
-      <View style={styles.card}>
-        <TouchableOpacity style={styles.row}>
-          <View style={styles.labelArea}>
-            <Ionicons name="person-circle" size={20} color="#fff" />
-            <Text style={styles.label}>Editar Perfil</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#666" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row} onPress={handleLogout}>
-          <View style={styles.labelArea}>
-            <Ionicons name="log-out" size={20} color="#ff4444" />
-            <Text style={[styles.label, { color: '#ff4444' }]}>Sair da Conta</Text>
-          </View>
+        <TouchableOpacity 
+          style={[styles.opcao, tema === 'escuro' && styles.cardEscuro]}
+          onPress={() => router.push('/detalhes_usuario')}>
+          <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+            Informações do Usuário
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.footerText}>Versão 1.0.0 - Grupo Ciência da Computação</Text>
+      {/* Seção 2: Personalização */}
+      <View style={styles.secao}>
+        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+          2. Personalização (Interface)
+        </Text>
+        
+        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
+          <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>Tema</Text>
+          
+          <View style={styles.botoesTema}>
+            <TouchableOpacity 
+              style={[styles.botaoTema, tema === 'claro' && styles.botaoAtivo]}
+              onPress={() => setTema('claro')}>
+              <Text style={[styles.textoBotao, tema === 'claro' && styles.textoBotaoAtivo]}>Claro</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.botaoTema, tema === 'escuro' && styles.botaoAtivo]}
+              onPress={() => setTema('escuro')}>
+              <Text style={[styles.textoBotao, tema === 'escuro' && styles.textoBotaoAtivo]}>Escuro</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+
+      {/* Seção 3: Notificações */}
+      <View style={styles.secao}>
+        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+          3. Notificações e Lembretes
+        </Text>
+
+        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
+          <View style={styles.linhaSwitch}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+                Alertas de Sistema
+              </Text>
+              <Text style={[styles.subtexto, tema === 'escuro' && styles.textoCinza]}>
+                Receber avisos sobre atualizações e novidades
+              </Text>
+            </View>
+            <Switch
+              value={alertaSistema}
+              onValueChange={setAlertaSistema}
+              trackColor={{ false: '#767577', true: '#bc8ddf',  }}
+              thumbColor={'#f4f3f4'}
+            />
+          </View>
+
+        </View>
+      </View>
+
+      {/* Seção 4: Suporte */}
+      <View style={styles.secao}>
+        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+          4. Suporte e Informações
+        </Text>
+        
+        <TouchableOpacity 
+          style={[styles.card, tema === 'escuro' && styles.cardEscuro]}
+          onPress={() => Alert.alert('Sobre', 'Diário App\nVersão 1.2.0')}>
+          <View style={styles.linhaInfo}>
+            <View>
+              <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+                Sobre o App
+              </Text>
+              <Text style={[styles.subtexto, tema === 'escuro' && styles.textoCinza]}>
+                Versão atual e informações do aplicativo
+              </Text>
+            </View>
+            <Text style={[styles.versao, tema === 'escuro' && styles.textoCinza]}>1.2.0</Text>
+          </View>
+        
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.card, styles.botaoSair]}
+          onPress={fazerLogout}>
+          <Text style={styles.textoSair}>Sair (Log out)</Text>
+        </TouchableOpacity>
+      </View>
+    
     </ScrollView>
   );
 }
@@ -75,50 +156,138 @@ export default function ConfiguraçõesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8cc', // Fundo preto conforme image_2.png
-    paddingHorizontal: 20,
+    backgroundColor: '#f5f5f5',
   },
-  mainTitle: {
-    fontSize: 28,
-    color: '#fff',
+  containerEscuro: {
+    backgroundColor: '#121212',
+  },
+  secao: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
+  tituloSecao: {
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 60,
-    marginBottom: 20,
-    fontFamily: 'Manrope-ExtraBold', // Mesma fonte de image_2.png
+    color: '#333',
+    marginBottom: 12,
+    marginTop: 8,
   },
-  sectionTitle: {
+  textoBranco: {
+    color: '#fff',
+  },
+  textoCinza: {
+    color: '#aaa',
+  },
+  // Estilos do card do usuário com imagem
+  cardUsuario: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cardEscuro: {
+    backgroundColor: '#1e1e1e',
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30, // Torna a imagem redonda
+  },
+  infoUsuario: {
+    flex: 1,
+  },
+  nomeUsuario: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  emailUsuario: {
     fontSize: 14,
     color: '#666',
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    letterSpacing: 1,
+    marginTop: 4,
+  },
+  opcao: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+  },
+  opcaoTexto: {
+    fontSize: 16,
+    color: '#333',
   },
   card: {
-    backgroundColor: '#1A1A1A', // Cor dos cards conforme image_2.png
-    borderRadius: 20,
-    padding: 15,
-    marginBottom: 25,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
   },
-  row: {
+  botoesTema: {
     flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  botaoTema: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#e0e0e0',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
   },
-  labelArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  botaoAtivo: {
+    backgroundColor: '#bc8ddf',
   },
-  label: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 12,
-  },
-  footerText: {
+  textoBotao: {
     color: '#333',
-    textAlign: 'center',
+  },
+  textoBotaoAtivo: {
+    color: '#fff',
+  },
+  linhaSwitch: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subtexto: {
     fontSize: 12,
-    marginTop: 20,
-    marginBottom: 40,
-  }
-});
+    color: '#666',
+    marginTop: 4,
+  },
+  horarioRow: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  horarioText: {
+    fontSize: 14,
+    color: '#007AFF',
+  },
+  linhaInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  versao: {
+    fontSize: 14,
+    color: '#666',
+  },
+  botaoSair: {
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+    alignItems: 'center',
+  },
+  textoSair: {
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+}); 
