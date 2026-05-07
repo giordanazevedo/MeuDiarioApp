@@ -46,7 +46,6 @@ export default function HistoricoScreen() {
   if (!fontsLoaded || loading) {
     return <ActivityIndicator size="large" color="#FF6B95" style={{ flex: 1, backgroundColor: '#000' }} />;
   }
-
 // Definimos o tipo do Registro para o TypeScript parar de reclamar
 interface Registro {
   id: number;
@@ -127,3 +126,4 @@ const styles = StyleSheet.create({
   noteText: { color: '#888', marginTop: 10, fontStyle: 'italic' },
   emptyText: { color: '#666', textAlign: 'center', marginTop: 50, fontFamily: 'Manrope-ExtraBold' }
 });
+
