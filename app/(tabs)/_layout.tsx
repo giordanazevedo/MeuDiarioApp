@@ -120,7 +120,6 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen name="calendario" options={{ title: 'Calendário', tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={24} color={color} /> }} />
-        <Tabs.Screen name="mais" options={{ title: 'Mais', tabBarIcon: ({ color }) => <Ionicons name="ellipsis-horizontal-circle-outline" size={24} color={color} /> }} />
       </Tabs>
     </>
   );

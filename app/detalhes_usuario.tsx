@@ -12,6 +12,8 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/supabase'; // Ajuste o caminho conforme sua configuração
 
+const ACCENT_COLOR = '#E94D89';
+
 export default function DetalhesUsuario() {
   const router = useRouter();
   
@@ -26,7 +28,7 @@ export default function DetalhesUsuario() {
   const [editando, setEditando] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
-  const [userId, setUserId] = useState(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Estatísticas
   const [totalEntradas, setTotalEntradas] = useState(0);
@@ -53,7 +55,7 @@ export default function DetalhesUsuario() {
         return;
       }
       
-      setUsuarioLogado(user.id);
+      setUserId(user.id);
       setEmail(user.email || '');
       
       // 2. Buscar dados do perfil na tabela 'usuarios'
@@ -214,7 +216,7 @@ export default function DetalhesUsuario() {
   if (carregando) {
     return (
       <View style={styles.centralizar}>
-        <ActivityIndicator size="large" color="#bc8ddf" />
+        <ActivityIndicator size="large" color={ACCENT_COLOR} />
         <Text style={styles.textoCarregando}>Carregando dados...</Text>
       </View>
     );
@@ -361,9 +363,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Manrope-ExtraBold',
   },
   header: {
-    backgroundColor: '#bc8ddf',
+    backgroundColor: ACCENT_COLOR,
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
@@ -377,10 +380,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Manrope-ExtraBold',
   },
   titulo: {
     fontSize: 28,
     fontWeight: 'bold',
+    fontFamily: 'Manrope-ExtraBold',
     color: '#fff',
   },
   avatarContainer: {
@@ -392,7 +397,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#bc8ddf',
+    backgroundColor: ACCENT_COLOR,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
@@ -417,6 +422,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'Manrope-ExtraBold',
     color: '#666',
     marginBottom: 8,
   },
@@ -436,13 +442,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginTop: 4,
+    fontFamily: 'Manrope-ExtraBold',
   },
   botoesContainer: {
     paddingHorizontal: 20,
     marginBottom: 20,
   },
   botaoEditar: {
-    backgroundColor: '#bc8ddf',
+    backgroundColor: ACCENT_COLOR,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -451,6 +458,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Manrope-ExtraBold',
   },
   botoesEdicao: {
     flexDirection: 'row',
@@ -466,17 +474,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   botaoSalvar: {
-    backgroundColor: '#bc8ddf',
+    backgroundColor: ACCENT_COLOR,
   },
   textoBotaoCancelar: {
     color: '#666',
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Manrope-ExtraBold',
   },
   textoBotaoSalvar: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Manrope-ExtraBold',
   },
   estatisticas: {
     padding: 20,
@@ -485,6 +495,7 @@ const styles = StyleSheet.create({
   tituloEstatisticas: {
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Manrope-ExtraBold',
     color: '#333',
     marginBottom: 16,
   },
@@ -505,14 +516,12 @@ const styles = StyleSheet.create({
   numeroEstatistica: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#308bed',
+    fontFamily: 'Manrope-ExtraBold',
+    color: ACCENT_COLOR,
   },
   labelEstatistica: {
     fontSize: 16,
     color: '#666',
+    fontFamily: 'Manrope-ExtraBold',
   },
 });
-
-function setUsuarioLogado(id: string) {
-  throw new Error('Function not implemented.');
-}

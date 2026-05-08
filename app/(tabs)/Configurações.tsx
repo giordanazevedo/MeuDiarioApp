@@ -1,5 +1,5 @@
 // app/(tabs)/Configurações.tsx (versão com Supabase)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/supabase';// Ajuste o caminho conforme sua configuração
+import { ThemeContext } from '../src/theme-context';
 
 export default function Configuracoes() {
   const router = useRouter();
+  const { theme, setTheme } = useContext(ThemeContext)!;
   
-  const [tema, setTema] = useState('claro');
-  const [lembreteDiario, setLembreteDiario] = useState(false);
-  const [horarioLembrete, setHorarioLembrete] = useState('20:00');
   const [alertaSistema, setAlertaSistema] = useState(true);
   
   // Estado para armazenar os dados do usuário logado
@@ -91,106 +90,69 @@ export default function Configuracoes() {
   };
 
   return (
-    <ScrollView style={[styles.container, tema === 'escuro' && styles.containerEscuro]}>
+    <ScrollView style={[styles.container, theme === 'dark' && styles.containerEscuro]}>
       
       <View style={styles.secao}>
-        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+        <Text style={[styles.tituloSecao, theme === 'dark' && styles.textoBranco]}>
           1. Perfil e Conta
         </Text>
         
         {/* Card com informações dinâmicas do usuário logado */}
-        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
-          <Text style={[styles.nome, tema === 'escuro' && styles.textoBranco]}>
+        <View style={[styles.card, theme === 'dark' && styles.cardEscuro]}>
+          <Text style={[styles.nome, theme === 'dark' && styles.textoBranco]}>
             {usuarioLogado.nome}
           </Text>
-          <Text style={[styles.email, tema === 'escuro' && styles.textoCinza]}>
+          <Text style={[styles.email, theme === 'dark' && styles.textoCinza]}>
             {usuarioLogado.email}
           </Text>
         </View>
 
         {/* Botão que navega para detalhes do usuário */}
         <TouchableOpacity 
-          style={[styles.opcao, tema === 'escuro' && styles.cardEscuro]}
+          style={[styles.opcao, theme === 'dark' && styles.cardEscuro]}
           onPress={() => router.push('/detalhes_usuario')}>
-          <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+          <Text style={[styles.opcaoTexto, theme === 'dark' && styles.textoBranco]}>
             Informações do Usuário
           </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.opcao, tema === 'escuro' && styles.cardEscuro]}
-          onPress={() => Alert.alert('Senha', 'Redefinir senha (em breve)')}>
-          <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
-            Alterar Senha
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.secao}>
-        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+        <Text style={[styles.tituloSecao, theme === 'dark' && styles.textoBranco]}>
           2. Personalização (Interface)
         </Text>
         
-        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
-          <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>Tema</Text>
+        <View style={[styles.card, theme === 'dark' && styles.cardEscuro]}>
+          <Text style={[styles.opcaoTexto, theme === 'dark' && styles.textoBranco]}>Tema</Text>
           
           <View style={styles.botoesTema}>
             <TouchableOpacity 
-              style={[styles.botaoTema, tema === 'claro' && styles.botaoAtivo]}
-              onPress={() => setTema('claro')}>
-              <Text style={[styles.textoBotao, tema === 'claro' && styles.textoBotaoAtivo]}>Claro</Text>
+              style={[styles.botaoTema, theme === 'light' && styles.botaoAtivo]}
+              onPress={() => setTheme('light')}>
+              <Text style={[styles.textoBotao, theme === 'light' && styles.textoBotaoAtivo]}>Claro</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.botaoTema, tema === 'escuro' && styles.botaoAtivo]}
-              onPress={() => setTema('escuro')}>
-              <Text style={[styles.textoBotao, tema === 'escuro' && styles.textoBotaoAtivo]}>Escuro</Text>
+              style={[styles.botaoTema, theme === 'dark' && styles.botaoAtivo]}
+              onPress={() => setTheme('dark')}>
+              <Text style={[styles.textoBotao, theme === 'dark' && styles.textoBotaoAtivo]}>Escuro</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
       <View style={styles.secao}>
-        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+        <Text style={[styles.tituloSecao, theme === 'dark' && styles.textoBranco]}>
           3. Notificações e Lembretes
         </Text>
-        
-        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
-          <View style={styles.linhaSwitch}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
-                Lembrete Diário
-              </Text>
-              <Text style={[styles.subtexto, tema === 'escuro' && styles.textoCinza]}>
-                Receba um lembrete para escrever no diário
-              </Text>
-            </View>
-            <Switch
-              value={lembreteDiario}
-              onValueChange={setLembreteDiario}
-              trackColor={{ false: '#767577', true: '#007AFF' }}
-              thumbColor={'#f4f3f4'}
-            />
-          </View>
-          
-          {lembreteDiario && (
-            <TouchableOpacity 
-              style={styles.horarioRow}
-              onPress={() => Alert.alert('Horário', 'Selecionar horário (em breve)')}>
-              <Text style={[styles.horarioText, tema === 'escuro' && styles.textoBranco]}>
-                Horário: {horarioLembrete}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
-        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
+        <View style={[styles.card, theme === 'dark' && styles.cardEscuro]}>
           <View style={styles.linhaSwitch}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+              <Text style={[styles.opcaoTexto, theme === 'dark' && styles.textoBranco]}>
                 Alertas de Sistema
               </Text>
-              <Text style={[styles.subtexto, tema === 'escuro' && styles.textoCinza]}>
+              <Text style={[styles.subtexto, theme === 'dark' && styles.textoCinza]}>
                 Receber avisos sobre atualizações e novidades
               </Text>
             </View>
@@ -205,23 +167,23 @@ export default function Configuracoes() {
       </View>
 
       <View style={styles.secao}>
-        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+        <Text style={[styles.tituloSecao, theme === 'dark' && styles.textoBranco]}>
           4. Suporte e Informações
         </Text>
         
         <TouchableOpacity 
-          style={[styles.card, tema === 'escuro' && styles.cardEscuro]}
+          style={[styles.card, theme === 'dark' && styles.cardEscuro]}
           onPress={() => Alert.alert('Sobre', 'Diário App\nVersão 1.2.0')}>
           <View style={styles.linhaInfo}>
             <View>
-              <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+              <Text style={[styles.opcaoTexto, theme === 'dark' && styles.textoBranco]}>
                 Sobre o App
               </Text>
-              <Text style={[styles.subtexto, tema === 'escuro' && styles.textoCinza]}>
+              <Text style={[styles.subtexto, theme === 'dark' && styles.textoCinza]}>
                 Versão atual e informações do aplicativo
               </Text>
             </View>
-            <Text style={[styles.versao, tema === 'escuro' && styles.textoCinza]}>1.2.0</Text>
+            <Text style={[styles.versao, theme === 'dark' && styles.textoCinza]}>1.2.0</Text>
           </View>
         </TouchableOpacity>
 
@@ -251,6 +213,7 @@ const styles = StyleSheet.create({
   tituloSecao: {
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Manrope-Bold',
     color: '#333',
     marginBottom: 12,
     marginTop: 8,
@@ -278,10 +241,12 @@ const styles = StyleSheet.create({
   opcaoTexto: {
     fontSize: 16,
     color: '#333',
+    fontFamily: 'Manrope-Bold',
   },
   nome: {
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'Manrope-Bold',
     color: '#333',
   },
   email: {
@@ -326,16 +291,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  horarioRow: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  horarioText: {
-    fontSize: 14,
-    color: '#007AFF',
-  },
+  
   linhaInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -354,5 +310,6 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Manrope-Bold',
   },
 });
