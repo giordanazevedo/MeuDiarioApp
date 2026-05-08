@@ -1,5 +1,4 @@
-// app/(tabs)/detalhes_usuario.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,36 +7,218 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { supabase } from '../src/supabase'; // Ajuste o caminho conforme sua configuração
 
 export default function DetalhesUsuario() {
   const router = useRouter();
   
-  // Dados do usuário (depois você pode buscar do seu sistema de login)
-  const [nome, setNome] = useState('Juliana Souza');
-  const [email, setEmail] = useState('juliana.souza@email.com');
-  const [telefone, setTelefone] = useState('(11) 98765-4321');
-  const [dataNascimento, setDataNascimento] = useState('15/03/1990');
+  // Estado para dados do usuário
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [dataNascimento, setDataNascimento] = useState('');
+  const [dataCadastro, setDataCadastro] = useState('');
   
+  // Estados de controle
   const [editando, setEditando] = useState(false);
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [userId, setUserId] = useState(null);
+  
+  // Estatísticas
+  const [totalEntradas, setTotalEntradas] = useState(0);
+  const [totalDiasImportantes, setTotalDiasImportantes] = useState(0);
+  const [diasSeguidos, setDiasSeguidos] = useState(0);
 
-  const salvarAlteracoes = () => {
-    Alert.alert(
-      'Sucesso',
-      'Informações atualizadas com sucesso!',
-      [{ text: 'OK', onPress: () => setEditando(false) }]
-    );
+  // Carregar dados do usuário ao iniciar
+  useEffect(() => {
+    carregarDadosUsuario();
+  }, []);
+
+  const carregarDadosUsuario = async () => {
+    try {
+      setCarregando(true);
+      
+      // 1. Buscar usuário autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) throw userError;
+      
+      if (!user) {
+        Alert.alert('Erro', 'Usuário não encontrado. Faça login novamente.');
+        router.replace('/start');
+        return;
+      }
+      
+      setUsuarioLogado(user.id);
+      setEmail(user.email || '');
+      
+      // 2. Buscar dados do perfil na tabela 'usuarios'
+      const { data: perfil, error: perfilError } = await supabase
+        .from('usuarios') // Ajuste o nome da tabela
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (perfilError && perfilError.code !== 'PGRST116') {
+        console.error('Erro ao buscar perfil:', perfilError);
+      }
+      
+      if (perfil) {
+        setNome(perfil.nome || '');
+        setTelefone(perfil.telefone || '');
+        setDataNascimento(perfil.data_nascimento || '');
+        setDataCadastro(perfil.data_cadastro || formatarData(new Date()));
+      } else {
+        // Se não encontrar perfil, usar dados do metadata ou criar padrão
+        setNome(user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário');
+        setDataCadastro(formatarData(new Date()));
+      }
+      
+      // 3. Buscar estatísticas
+      await carregarEstatisticas(user.id);
+      
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+      Alert.alert('Erro', 'Não foi possível carregar os dados do usuário.');
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  const cancelarEdicao = () => {
-    // Recarregar dados originais (aqui você recarregaria do banco)
-    setNome('Juliana Souza');
-    setEmail('juliana.souza@email.com');
-    setTelefone('(11) 98765-4321');
-    setDataNascimento('15/03/1990');
+  const carregarEstatisticas = async (userId: string) => {
+    try {
+      // Buscar total de entradas no diário
+      const { count: totalDiarios, error: errorDiarios } = await supabase
+        .from('diarios') // Ajuste o nome da tabela
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_id', userId);
+      
+      if (!errorDiarios) setTotalEntradas(totalDiarios || 0);
+      
+      // Buscar total de dias importantes
+      const { count: totalImportantes, error: errorImportantes } = await supabase
+        .from('dias_importantes') // Ajuste o nome da tabela
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_id', userId);
+      
+      if (!errorImportantes) setTotalDiasImportantes(totalImportantes || 0);
+      
+      // Calcular dias seguidos (exemplo simplificado)
+      const { data: ultimosDiarios, error: errorSeguidos } = await supabase
+        .from('diarios')
+        .select('data_criacao')
+        .eq('usuario_id', userId)
+        .order('data_criacao', { ascending: false })
+        .limit(30);
+      
+      if (!errorSeguidos && ultimosDiarios) {
+        const diasSeguidosCalc = calcularDiasSeguidos(ultimosDiarios);
+        setDiasSeguidos(diasSeguidosCalc);
+      }
+      
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+    }
+  };
+
+  const calcularDiasSeguidos = (diarios: any[]) => {
+    if (!diarios.length) return 0;
+    
+    let seguidos = 1;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < diarios.length - 1; i++) {
+      const dataAtual = new Date(diarios[i].data_criacao);
+      const dataProxima = new Date(diarios[i + 1].data_criacao);
+      
+      const diffDias = Math.floor((dataAtual.getTime() - dataProxima.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDias === 1) {
+        seguidos++;
+      } else {
+        break;
+      }
+    }
+    
+    return seguidos;
+  };
+
+  const formatarData = (data: Date) => {
+    return data.toLocaleDateString('pt-BR');
+  };
+
+  const formatarDataParaBanco = (data: string) => {
+    // Converte DD/MM/AAAA para YYYY-MM-DD
+    const partes = data.split('/');
+    if (partes.length === 3) {
+      return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+    return data;
+  };
+
+  const salvarAlteracoes = async () => {
+    try {
+      setSalvando(true);
+      
+      // Validar campos
+      if (!nome.trim()) {
+        Alert.alert('Erro', 'O nome é obrigatório.');
+        return;
+      }
+      
+      // Atualizar dados no Supabase
+      const { error } = await supabase
+        .from('usuarios')
+        .upsert({
+          id: userId,
+          nome: nome,
+          telefone: telefone,
+          data_nascimento: dataNascimento ? formatarDataParaBanco(dataNascimento) : null,
+          updated_at: new Date().toISOString(),
+        });
+      
+      if (error) throw error;
+      
+      // Atualizar metadata do usuário se necessário
+      if (nome) {
+        await supabase.auth.updateUser({
+          data: { nome: nome }
+        });
+      }
+      
+      Alert.alert(
+        'Sucesso',
+        'Informações atualizadas com sucesso!',
+        [{ text: 'OK', onPress: () => setEditando(false) }]
+      );
+      
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações. Tente novamente.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const cancelarEdicao = async () => {
+    // Recarregar dados originais
+    await carregarDadosUsuario();
     setEditando(false);
   };
+
+  if (carregando) {
+    return (
+      <View style={styles.centralizar}>
+        <ActivityIndicator size="large" color="#bc8ddf" />
+        <Text style={styles.textoCarregando}>Carregando dados...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -67,13 +248,12 @@ export default function DetalhesUsuario() {
         <View style={styles.campo}>
           <Text style={styles.label}>E-mail</Text>
           <TextInput
-            style={[styles.input, !editando && styles.inputDesabilitado]}
+            style={[styles.input, styles.inputDesabilitado]}
             value={email}
-            onChangeText={setEmail}
-            editable={editando}
-            keyboardType="email-address"
+            editable={false}
             placeholder="seu@email.com"
           />
+          <Text style={styles.textoAjuda}>O e-mail não pode ser alterado</Text>
         </View>
 
         {/* Telefone */}
@@ -101,12 +281,12 @@ export default function DetalhesUsuario() {
           />
         </View>
 
-        {/* Data de cadastro (apenas leitura) */}
+        {/* Data de cadastro */}
         <View style={styles.campo}>
           <Text style={styles.label}>Membro desde</Text>
           <TextInput
             style={[styles.input, styles.inputDesabilitado]}
-            value="15/01/2024"
+            value={dataCadastro}
             editable={false}
           />
         </View>
@@ -124,14 +304,20 @@ export default function DetalhesUsuario() {
           <View style={styles.botoesEdicao}>
             <TouchableOpacity 
               style={[styles.botao, styles.botaoCancelar]}
-              onPress={cancelarEdicao}>
+              onPress={cancelarEdicao}
+              disabled={salvando}>
               <Text style={styles.textoBotaoCancelar}>Cancelar</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={[styles.botao, styles.botaoSalvar]}
-              onPress={salvarAlteracoes}>
-              <Text style={styles.textoBotaoSalvar}>Salvar</Text>
+              onPress={salvarAlteracoes}
+              disabled={salvando}>
+              {salvando ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.textoBotaoSalvar}>Salvar</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -142,17 +328,17 @@ export default function DetalhesUsuario() {
         <Text style={styles.tituloEstatisticas}>Estatísticas da conta</Text>
         
         <View style={styles.cardEstatistica}>
-          <Text style={styles.numeroEstatistica}>47</Text>
+          <Text style={styles.numeroEstatistica}>{totalEntradas}</Text>
           <Text style={styles.labelEstatistica}>Entradas no diário</Text>
         </View>
         
         <View style={styles.cardEstatistica}>
-          <Text style={styles.numeroEstatistica}>12</Text>
+          <Text style={styles.numeroEstatistica}>{totalDiasImportantes}</Text>
           <Text style={styles.labelEstatistica}>Dias importantes</Text>
         </View>
         
         <View style={styles.cardEstatistica}>
-          <Text style={styles.numeroEstatistica}>15</Text>
+          <Text style={styles.numeroEstatistica}>{diasSeguidos}</Text>
           <Text style={styles.labelEstatistica}>Dias seguidos</Text>
         </View>
       </View>
@@ -164,6 +350,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  centralizar: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  textoCarregando: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
   header: {
     backgroundColor: '#bc8ddf',
@@ -211,13 +408,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  botaoEditarAvatar: {
-    marginTop: 8,
-  },
-  textoEditarAvatar: {
-    color: '#121315',
-    fontSize: 14,
-  },
   formulario: {
     padding: 20,
   },
@@ -241,6 +431,11 @@ const styles = StyleSheet.create({
   inputDesabilitado: {
     backgroundColor: '#f9f9f9',
     color: '#333',
+  },
+  textoAjuda: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
   },
   botoesContainer: {
     paddingHorizontal: 20,
@@ -317,3 +512,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 });
+
+function setUsuarioLogado(id: string) {
+  throw new Error('Function not implemented.');
+}

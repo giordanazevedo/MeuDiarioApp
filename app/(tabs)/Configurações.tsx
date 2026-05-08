@@ -1,5 +1,5 @@
-// app/(tabs)/Configurações.tsx
-import React, { useState } from 'react';
+// app/(tabs)/Configurações.tsx (versão com Supabase)
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../src/supabase';// Ajuste o caminho conforme sua configuração
 
 export default function Configuracoes() {
   const router = useRouter();
@@ -20,8 +19,55 @@ export default function Configuracoes() {
   const [lembreteDiario, setLembreteDiario] = useState(false);
   const [horarioLembrete, setHorarioLembrete] = useState('20:00');
   const [alertaSistema, setAlertaSistema] = useState(true);
+  
+  // Estado para armazenar os dados do usuário logado
+  const [usuarioLogado, setUsuarioLogado] = useState({
+    nome: '',
+    email: '',
+  });
 
-  const fazerLogout = () => {
+  useEffect(() => {
+    carregarDadosUsuario();
+  }, []);
+
+  // Função para carregar os dados do usuário do Supabase
+  const carregarDadosUsuario = async () => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Erro ao buscar usuário:', userError);
+        throw userError;
+      }
+      
+      if (user) {
+        // Busca informações adicionais do perfil na tabela 'usuarios' ou 'profiles'
+        const { data: perfil, error: perfilError } = await supabase
+          .from('usuarios') // Ajuste o nome da tabela conforme seu banco
+          .select('nome, email')
+          .eq('id', user.id)
+          .single();
+        
+        if (perfilError && perfilError.code !== 'PGRST116') { // PGRST116 = não encontrado
+          console.error('Erro ao buscar perfil:', perfilError);
+        }
+        
+        setUsuarioLogado({
+          nome: perfil?.nome || user.user_metadata?.nome || user.email?.split('@')[0] || 'Usuário',
+          email: user.email || perfil?.email || 'email@exemplo.com',
+        });
+      } else {
+        // Se não houver usuário logado, redireciona para o login
+        Alert.alert('Sessão expirada', 'Faça login novamente.', [
+          { text: 'OK', onPress: () => router.replace('/start') }
+        ]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar usuário:', error);
+    }
+  };
+
+  const fazerLogout = async () => {
     Alert.alert(
       'Sair',
       'Deseja realmente sair?',
@@ -30,7 +76,15 @@ export default function Configuracoes() {
         { 
           text: 'Sair', 
           style: 'destructive',
-          onPress: () => router.replace('/start')
+          onPress: async () => {
+            try {
+              await supabase.auth.signOut();
+              router.replace('/start');
+            } catch (error) {
+              console.error('Erro ao fazer logout:', error);
+              Alert.alert('Erro', 'Não foi possível sair. Tente novamente.');
+            }
+          }
         }
       ]
     );
@@ -39,24 +93,22 @@ export default function Configuracoes() {
   return (
     <ScrollView style={[styles.container, tema === 'escuro' && styles.containerEscuro]}>
       
-      {/* Seção 1: Perfil e Conta */}
       <View style={styles.secao}>
+        <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
+          1. Perfil e Conta
+        </Text>
         
-        {/* Card do usuário COM IMAGEM */}
-        <View style={[styles.cardUsuario, tema === 'escuro' && styles.cardEscuro]}>
-          {/* Opção 1: Ícone (mais fácil) */}
-          <Ionicons name="person-circle" size={70} color="#007AFF" />
-          
-          <View style={styles.infoUsuario}>
-            <Text style={[styles.nomeUsuario, tema === 'escuro' && styles.textoBranco]}>
-              Juliana Souza
-            </Text>
-            <Text style={[styles.emailUsuario, tema === 'escuro' && styles.textoCinza]}>
-              juliana.souza@email.com
-            </Text>
-          </View>
+        {/* Card com informações dinâmicas do usuário logado */}
+        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
+          <Text style={[styles.nome, tema === 'escuro' && styles.textoBranco]}>
+            {usuarioLogado.nome}
+          </Text>
+          <Text style={[styles.email, tema === 'escuro' && styles.textoCinza]}>
+            {usuarioLogado.email}
+          </Text>
         </View>
 
+        {/* Botão que navega para detalhes do usuário */}
         <TouchableOpacity 
           style={[styles.opcao, tema === 'escuro' && styles.cardEscuro]}
           onPress={() => router.push('/detalhes_usuario')}>
@@ -64,9 +116,16 @@ export default function Configuracoes() {
             Informações do Usuário
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.opcao, tema === 'escuro' && styles.cardEscuro]}
+          onPress={() => Alert.alert('Senha', 'Redefinir senha (em breve)')}>
+          <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+            Alterar Senha
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Seção 2: Personalização */}
       <View style={styles.secao}>
         <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
           2. Personalização (Interface)
@@ -91,12 +150,39 @@ export default function Configuracoes() {
         </View>
       </View>
 
-
-      {/* Seção 3: Notificações */}
       <View style={styles.secao}>
         <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
           3. Notificações e Lembretes
         </Text>
+        
+        <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
+          <View style={styles.linhaSwitch}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.opcaoTexto, tema === 'escuro' && styles.textoBranco]}>
+                Lembrete Diário
+              </Text>
+              <Text style={[styles.subtexto, tema === 'escuro' && styles.textoCinza]}>
+                Receba um lembrete para escrever no diário
+              </Text>
+            </View>
+            <Switch
+              value={lembreteDiario}
+              onValueChange={setLembreteDiario}
+              trackColor={{ false: '#767577', true: '#007AFF' }}
+              thumbColor={'#f4f3f4'}
+            />
+          </View>
+          
+          {lembreteDiario && (
+            <TouchableOpacity 
+              style={styles.horarioRow}
+              onPress={() => Alert.alert('Horário', 'Selecionar horário (em breve)')}>
+              <Text style={[styles.horarioText, tema === 'escuro' && styles.textoBranco]}>
+                Horário: {horarioLembrete}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <View style={[styles.card, tema === 'escuro' && styles.cardEscuro]}>
           <View style={styles.linhaSwitch}>
@@ -111,15 +197,13 @@ export default function Configuracoes() {
             <Switch
               value={alertaSistema}
               onValueChange={setAlertaSistema}
-              trackColor={{ false: '#767577', true: '#bc8ddf',  }}
+              trackColor={{ false: '#767577', true: '#007AFF' }}
               thumbColor={'#f4f3f4'}
             />
           </View>
-
         </View>
       </View>
 
-      {/* Seção 4: Suporte */}
       <View style={styles.secao}>
         <Text style={[styles.tituloSecao, tema === 'escuro' && styles.textoBranco]}>
           4. Suporte e Informações
@@ -139,7 +223,6 @@ export default function Configuracoes() {
             </View>
             <Text style={[styles.versao, tema === 'escuro' && styles.textoCinza]}>1.2.0</Text>
           </View>
-        
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -148,7 +231,7 @@ export default function Configuracoes() {
           <Text style={styles.textoSair}>Sair (Log out)</Text>
         </TouchableOpacity>
       </View>
-    
+
     </ScrollView>
   );
 }
@@ -172,21 +255,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 8,
   },
-  textoBranco: {
-    color: '#fff',
-  },
-  textoCinza: {
-    color: '#aaa',
-  },
-  // Estilos do card do usuário com imagem
-  cardUsuario: {
+  card: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -195,24 +268,6 @@ const styles = StyleSheet.create({
   },
   cardEscuro: {
     backgroundColor: '#1e1e1e',
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30, // Torna a imagem redonda
-  },
-  infoUsuario: {
-    flex: 1,
-  },
-  nomeUsuario: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  emailUsuario: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
   },
   opcao: {
     backgroundColor: '#fff',
@@ -224,11 +279,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
+  nome: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  email: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  textoBranco: {
+    color: '#fff',
+  },
+  textoCinza: {
+    color: '#aaa',
   },
   botoesTema: {
     flexDirection: 'row',
@@ -243,7 +308,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   botaoAtivo: {
-    backgroundColor: '#bc8ddf',
+    backgroundColor: '#007AFF',
   },
   textoBotao: {
     color: '#333',
@@ -290,4 +355,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-}); 
+});
