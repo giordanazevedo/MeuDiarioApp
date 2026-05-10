@@ -1,85 +1,148 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  SafeAreaView,
-  Modal,
-  ScrollView,
-  TextInput,
+  Manrope_400Regular,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+  useFonts,
+} from "@expo-google-fonts/manrope";
+import { FontAwesome5, Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
   ActivityIndicator,
-  Image,
-  FlatList,
-  RefreshControl,
-  Dimensions,
+  Alert,
   Animated,
-} from 'react-native';
-import { supabase } from '../../src/supabase';
-import { useRouter } from 'expo-router';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { useFonts, Manrope_800ExtraBold, Manrope_700Bold, Manrope_400Regular } from '@expo-google-fonts/manrope';
-import { useFocusEffect } from '@react-navigation/native';
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { supabase } from "../../src/supabase";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 // =============================================
 // 1. CONFIGURAÇÃO DOS HUMORES PRINCIPAIS
 // =============================================
 const mainMoods = [
-  { label: 'Ótimo', emoji: require('../../assets/images/emojisprincipal/otimo.png'), color: '#FFD93D', value: 'Otimo' },
-  { label: 'Bem', emoji: require('../../assets/images/emojisprincipal/bem.png'), color: '#FF8C42', value: 'Bem' },
-  { label: 'Ruim', emoji: require('../../assets/images/emojisprincipal/ruim.png'), color: '#FF4D4D', value: 'Ruim' },
-  { label: 'Horrível', emoji: require('../../assets/images/emojisprincipal/horrivel.png'), color: '#C850C0', value: 'Horrivel' },
+  {
+    label: "Ótimo",
+    emoji: require("../../assets/images/emojisprincipal/otimo.png"),
+    color: "#FFD93D",
+    value: "Otimo",
+  },
+  {
+    label: "Bem",
+    emoji: require("../../assets/images/emojisprincipal/bem.png"),
+    color: "#FF8C42",
+    value: "Bem",
+  },
+  {
+    label: "Ruim",
+    emoji: require("../../assets/images/emojisprincipal/ruim.png"),
+    color: "#FF4D4D",
+    value: "Ruim",
+  },
+  {
+    label: "Horrível",
+    emoji: require("../../assets/images/emojisprincipal/horrivel.png"),
+    color: "#C850C0",
+    value: "Horrivel",
+  },
 ];
 
 // =============================================
 // FRASES MOTIVACIONAIS DIÁRIAS
 // =============================================
 const frasesMotivacionais = [
-  { texto: 'Cuide da sua mente, ela cuida de você. 🧠', autor: 'MeuDiário' },
-  { texto: 'Cada dia é uma nova chance de ser melhor. 🌱', autor: 'MeuDiário' },
-  { texto: 'Você é mais forte do que imagina. 💪', autor: 'MeuDiário' },
-  { texto: 'Respirar fundo já é um ato de autocuidado. 🌬️', autor: 'MeuDiário' },
-  { texto: 'Pequenos passos levam a grandes mudanças. 🦋', autor: 'MeuDiário' },
-  { texto: 'Permita-se descansar sem culpa. ☁️', autor: 'MeuDiário' },
-  { texto: 'Seu bem-estar é prioridade, não luxo. ✨', autor: 'MeuDiário' },
+  { texto: "Cuide da sua mente, ela cuida de você. 🧠", autor: "MeuDiário" },
+  { texto: "Cada dia é uma nova chance de ser melhor. 🌱", autor: "MeuDiário" },
+  { texto: "Você é mais forte do que imagina. 💪", autor: "MeuDiário" },
+  {
+    texto: "Respirar fundo já é um ato de autocuidado. 🌬️",
+    autor: "MeuDiário",
+  },
+  { texto: "Pequenos passos levam a grandes mudanças. 🦋", autor: "MeuDiário" },
+  { texto: "Permita-se descansar sem culpa. ☁️", autor: "MeuDiário" },
+  { texto: "Seu bem-estar é prioridade, não luxo. ✨", autor: "MeuDiário" },
 ];
 
 // =============================================
 // DICAS DE BEM-ESTAR
 // =============================================
 const dicasBemEstar = [
-  { titulo: 'Hidrate-se', descricao: 'Beba pelo menos 2L de água hoje.', icone: 'water-outline', cor: '#4ECDC4' },
-  { titulo: 'Respire fundo', descricao: '5 minutos de respiração profunda reduzem a ansiedade.', icone: 'leaf-outline', cor: '#A8E6CF' },
-  { titulo: 'Movimento', descricao: 'Uma caminhada de 15 min melhora o humor.', icone: 'walk-outline', cor: '#FFD93D' },
-  { titulo: 'Gratidão', descricao: 'Anote 3 coisas boas que aconteceram hoje.', icone: 'heart-outline', cor: '#FF6B95' },
-  { titulo: 'Desconecte', descricao: 'Tire 30 min longe das telas antes de dormir.', icone: 'phone-portrait-outline', cor: '#C850C0' },
-  { titulo: 'Sono', descricao: 'Tente dormir e acordar no mesmo horário.', icone: 'moon-outline', cor: '#7B68EE' },
-  { titulo: 'Conexão', descricao: 'Converse com alguém que te faz bem.', icone: 'people-outline', cor: '#FF8C42' },
+  {
+    titulo: "Hidrate-se",
+    descricao: "Beba pelo menos 2L de água hoje.",
+    icone: "water-outline",
+    cor: "#4ECDC4",
+  },
+  {
+    titulo: "Respire fundo",
+    descricao: "5 minutos de respiração profunda reduzem a ansiedade.",
+    icone: "leaf-outline",
+    cor: "#A8E6CF",
+  },
+  {
+    titulo: "Movimento",
+    descricao: "Uma caminhada de 15 min melhora o humor.",
+    icone: "walk-outline",
+    cor: "#FFD93D",
+  },
+  {
+    titulo: "Gratidão",
+    descricao: "Anote 3 coisas boas que aconteceram hoje.",
+    icone: "heart-outline",
+    cor: "#FF6B95",
+  },
+  {
+    titulo: "Desconecte",
+    descricao: "Tire 30 min longe das telas antes de dormir.",
+    icone: "phone-portrait-outline",
+    cor: "#C850C0",
+  },
+  {
+    titulo: "Sono",
+    descricao: "Tente dormir e acordar no mesmo horário.",
+    icone: "moon-outline",
+    cor: "#7B68EE",
+  },
+  {
+    titulo: "Conexão",
+    descricao: "Converse com alguém que te faz bem.",
+    icone: "people-outline",
+    cor: "#FF8C42",
+  },
 ];
 
 // =============================================
 // 2. OPÇÕES DETALHADAS PARA O MODAL (TELA 2)
 // =============================================
 const emotionsList = [
-  { id: '1', label: 'Feliz', icon: 'smile-beam' },
-  { id: '2', label: 'Empolgado(a)', icon: 'grin-stars' },
-  { id: '3', label: 'Grato(a)', icon: 'hand-holding-heart' },
-  { id: '4', label: 'Ansioso(a)', icon: 'meh' },
+  { id: "1", label: "Feliz", icon: "smile-beam" },
+  { id: "2", label: "Empolgado(a)", icon: "grin-stars" },
+  { id: "3", label: "Grato(a)", icon: "hand-holding-heart" },
+  { id: "4", label: "Ansioso(a)", icon: "meh" },
 ];
 
 const sleepList = [
-  { id: 's1', label: 'Bom Sono', icon: 'bed' },
-  { id: 's2', label: 'Sono Neutro', icon: 'bed' },
-  { id: 's3', label: 'Sono Ruim', icon: 'procedures' },
+  { id: "s1", label: "Bom Sono", icon: "bed" },
+  { id: "s2", label: "Sono Neutro", icon: "bed" },
+  { id: "s3", label: "Sono Ruim", icon: "procedures" },
 ];
 
 const healthList = [
-  { id: 'h1', label: 'Atividade Física', icon: 'walking' },
-  { id: 'h2', label: 'Alimentação Saudável', icon: 'apple-alt' },
-  { id: 'h3', label: 'Beber Água', icon: 'tint' },
+  { id: "h1", label: "Atividade Física", icon: "walking" },
+  { id: "h2", label: "Alimentação Saudável", icon: "apple-alt" },
+  { id: "h3", label: "Beber Água", icon: "tint" },
 ];
 
 // =============================================
@@ -92,8 +155,8 @@ interface Registro {
   nivel_sono: string;
   nivel_saude: string;
   anotacao?: string;
-  emocao_detalhe?: string;
-  user_id: string;
+  atividades?: string;
+  user_id: string; // <-- Corrigido para user_id
 }
 
 // =============================================
@@ -104,19 +167,20 @@ export default function HomeScreen() {
 
   // Estados do Modal de registro
   const [modalVisible, setModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // NOVO ESTADO DE LOADING NO BOTÃO
   const [selectedMainMood, setSelectedMainMood] = useState<any>(null);
-  const [selectedEmotion, setSelectedEmotion] = useState('');
-  const [selectedSleep, setSelectedSleep] = useState('');
-  const [selectedHealth, setSelectedHealth] = useState('');
-  const [note, setNote] = useState('');
+  const [selectedEmotion, setSelectedEmotion] = useState("");
+  const [selectedSleep, setSelectedSleep] = useState("");
+  const [selectedHealth, setSelectedHealth] = useState("");
+  const [note, setNote] = useState("");
 
   // Estados da tela principal
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState("");
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalRegistros, setTotalRegistros] = useState(0);
-  const [humorFrequente, setHumorFrequente] = useState('');
+  const [humorFrequente, setHumorFrequente] = useState("");
   const [jaRegistrouHoje, setJaRegistrouHoje] = useState(false);
 
   // Animação de entrada
@@ -124,15 +188,18 @@ export default function HomeScreen() {
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   // Frase e dica do dia (baseadas no dia do ano)
-  const diaDoAno = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  const diaDoAno = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) /
+      86400000,
+  );
   const fraseHoje = frasesMotivacionais[diaDoAno % frasesMotivacionais.length];
   const dicaHoje = dicasBemEstar[diaDoAno % dicasBemEstar.length];
 
   // Carregar fontes
   let [fontsLoaded] = useFonts({
-    'Manrope-ExtraBold': Manrope_800ExtraBold,
-    'Manrope-Bold': Manrope_700Bold,
-    'Manrope-Regular': Manrope_400Regular,
+    "Manrope-ExtraBold": Manrope_800ExtraBold,
+    "Manrope-Bold": Manrope_700Bold,
+    "Manrope-Regular": Manrope_400Regular,
   });
 
   // =============================================
@@ -141,69 +208,82 @@ export default function HomeScreen() {
 
   // Buscar dados do usuário logado
   const fetchUserData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
-      // Pegar a parte antes do @ do email como nome
-      const nome = user.email?.split('@')[0] || 'Usuário';
-      // Capitalizar a primeira letra
+      const nome = user.email?.split("@")[0] || "Usuário";
       setUserName(nome.charAt(0).toUpperCase() + nome.slice(1));
     }
   };
 
   // Buscar registros recentes do usuário
   const fetchRegistros = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) return;
 
+    // ATUALIZADO: Buscar na tabela 'registros' e coluna 'user_id'
     const { data, error } = await supabase
-      .from('registros')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('data_criacao', { ascending: false })
+      .from("registros")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("data_criacao", { ascending: false })
       .limit(5);
 
     if (!error && data) {
       setRegistros(data);
       setTotalRegistros(data.length);
 
-      // Verificar se já registrou hoje
       const hoje = new Date().toDateString();
-      const registrouHoje = data.some((r) => new Date(r.data_criacao).toDateString() === hoje);
+      const registrouHoje = data.some(
+        (r) => new Date(r.data_criacao).toDateString() === hoje,
+      );
       setJaRegistrouHoje(registrouHoje);
 
-      // Calcular humor mais frequente
       if (data.length > 0) {
         const contagem: Record<string, number> = {};
         data.forEach((r) => {
           contagem[r.humor] = (contagem[r.humor] || 0) + 1;
         });
-        const maisFrequente = Object.entries(contagem).sort((a, b) => b[1] - a[1])[0];
-        setHumorFrequente(maisFrequente ? maisFrequente[0] : '');
+        const maisFrequente = Object.entries(contagem).sort(
+          (a, b) => b[1] - a[1],
+        )[0];
+        setHumorFrequente(maisFrequente ? maisFrequente[0] : "");
       }
+    } else if (error) {
+      console.error("Erro ao buscar registros:", error);
     }
+
+    // Agora os loadings fecham no lugar certo
     setLoading(false);
     setRefreshing(false);
   };
 
-  // Carregar dados ao montar o componente
   useEffect(() => {
     fetchUserData();
     fetchRegistros();
-    // Animação de entrada
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
-  // Recarregar quando a tela receber foco (voltar de outra aba)
   useFocusEffect(
     useCallback(() => {
       fetchRegistros();
-    }, [])
+    }, []),
   );
 
-  // Pull-to-refresh
   const onRefresh = () => {
     setRefreshing(true);
     fetchRegistros();
@@ -213,38 +293,60 @@ export default function HomeScreen() {
   // FUNÇÕES DE INTERAÇÃO
   // =============================================
 
-  // Ao selecionar um humor principal, abre o modal de detalhes
   const handleMainMoodSelect = (mood: any) => {
     setSelectedMainMood(mood);
     setModalVisible(true);
   };
 
-  // Salvar registro completo no Supabase
+  // ATUALIZADO: Função de salvar blindada e com Loading
   const handleFinalSave = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      setIsSaving(true); // Liga a rodinha de carregamento do botão
 
-    const { error } = await supabase.from('registros').insert([{
-      humor: selectedMainMood.value,
-      user_id: user.id,
-      emocao_detalhe: selectedEmotion,
-      nivel_sono: selectedSleep,
-      nivel_saude: selectedHealth,
-      anotacao: note,
-      data_criacao: new Date().toISOString()
-    }]);
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-    if (!error) {
-      setModalVisible(false);
-      Alert.alert('Sucesso ✌️', 'Seu registro foi salvo!');
-      // Limpar campos e recarregar dados
-      setSelectedEmotion('');
-      setSelectedSleep('');
-      setSelectedHealth('');
-      setNote('');
-      fetchRegistros();
-    } else {
-      Alert.alert('Erro', 'Não foi possível salvar o registro.');
+      if (userError || !user) {
+        Alert.alert(
+          "Sessão expirada",
+          "Faça login novamente para salvar seu diário.",
+        );
+        setIsSaving(false);
+        return;
+      }
+
+      // ATUALIZADO: Salvar na tabela 'registros'
+      const { error } = await supabase.from("registros").insert([
+        {
+          humor: selectedMainMood.value,
+          user_id: user.id, // ATUALIZADO: Nome da coluna correto
+          atividades: selectedEmotion, // Salvando a emoção na coluna certa
+          nivel_sono: selectedSleep,
+          nivel_saude: selectedHealth,
+          anotacao: note,
+          data_criacao: new Date().toISOString(),
+        },
+      ]);
+
+      if (!error) {
+        setModalVisible(false);
+        Alert.alert("Sucesso ✌️", "Seu registro foi salvo!");
+        setSelectedEmotion("");
+        setSelectedSleep("");
+        setSelectedHealth("");
+        setNote("");
+        fetchRegistros();
+      } else {
+        console.error("Erro do Supabase ao salvar:", error);
+        Alert.alert("Erro do Banco", error.message);
+      }
+    } catch (err) {
+      console.error("Erro inesperado:", err);
+      Alert.alert("Erro", "Ocorreu um problema de conexão. Tente novamente.");
+    } finally {
+      setIsSaving(false); // Desliga a rodinha independente de dar certo ou errado
     }
   };
 
@@ -252,39 +354,41 @@ export default function HomeScreen() {
   // FUNÇÕES AUXILIARES DE FORMATAÇÃO
   // =============================================
 
-  // Obter saudação baseada no horário
   const getSaudacao = () => {
     const hora = new Date().getHours();
-    if (hora < 12) return 'Bom dia';
-    if (hora < 18) return 'Boa tarde';
-    return 'Boa noite';
+    if (hora < 12) return "Bom dia";
+    if (hora < 18) return "Boa tarde";
+    return "Boa noite";
   };
 
-  // Formatar a data de hoje
   const getDataHoje = () => {
     const hoje = new Date();
     const opcoes: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
+      weekday: "long",
+      day: "numeric",
+      month: "long",
     };
-    const dataFormatada = hoje.toLocaleDateString('pt-BR', opcoes);
+    const dataFormatada = hoje.toLocaleDateString("pt-BR", opcoes);
     return dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
   };
 
-  // Obter ícone do humor para os cards de registros recentes
   const getHumorIcon = (humor: string) => {
     switch (humor) {
-      case 'Otimo': return { icon: 'happy', color: '#FFD93D' };
-      case 'Bem': return { icon: 'happy-outline', color: '#FF8C42' };
-      case 'Ruim': return { icon: 'sad-outline', color: '#FF4D4D' };
-      case 'Horrivel': return { icon: 'sad', color: '#C850C0' };
-      default: return { icon: 'ellipse', color: '#666' };
+      case "Otimo":
+        return { icon: "happy", color: "#FFD93D" };
+      case "Bem":
+        return { icon: "happy-outline", color: "#FF8C42" };
+      case "Ruim":
+        return { icon: "sad-outline", color: "#FF4D4D" };
+      case "Horrivel":
+        return { icon: "sad", color: "#C850C0" };
+      default:
+        return { icon: "ellipse", color: "#666" };
     }
   };
 
   // =============================================
-  // LOADING
+  // LOADING DA TELA INICIAL
   // =============================================
   if (!fontsLoaded || loading) {
     return (
@@ -296,34 +400,67 @@ export default function HomeScreen() {
   }
 
   // =============================================
-  // COMPONENTE DE ITEM SELECIONÁVEL (MODAL)
+  // COMPONENTES AUXILIARES
   // =============================================
   const SelectableItem = ({ item, selected, onSelect }: any) => (
-    <TouchableOpacity onPress={() => onSelect(item.label)} style={styles.iconItem}>
-      <View style={[styles.iconCircle, selected === item.label && styles.iconCircleActive]}>
-        <FontAwesome5 name={item.icon} size={22} color={selected === item.label ? '#fff' : '#E94D89'} />
+    <TouchableOpacity
+      onPress={() => onSelect(item.label)}
+      style={styles.iconItem}
+    >
+      <View
+        style={[
+          styles.iconCircle,
+          selected === item.label && styles.iconCircleActive,
+        ]}
+      >
+        <FontAwesome5
+          name={item.icon}
+          size={22}
+          color={selected === item.label ? "#fff" : "#E94D89"}
+        />
       </View>
-      <Text style={[styles.iconLabel, selected === item.label && styles.labelActive]}>{item.label}</Text>
+      <Text
+        style={[
+          styles.iconLabel,
+          selected === item.label && styles.labelActive,
+        ]}
+      >
+        {item.label}
+      </Text>
     </TouchableOpacity>
   );
 
-  // =============================================
-  // COMPONENTE DE CARD DE REGISTRO RECENTE
-  // =============================================
   const renderRegistroItem = ({ item }: { item: Registro }) => {
     const dataObj = new Date(item.data_criacao);
-    const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-    const horaFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const dataFormatada = dataObj.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+    });
+    const horaFormatada = dataObj.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
     const humorInfo = getHumorIcon(item.humor);
 
     return (
       <TouchableOpacity style={styles.registroCard} activeOpacity={0.7}>
-        <View style={[styles.registroIconCircle, { backgroundColor: humorInfo.color + '20' }]}>
-          <Ionicons name={humorInfo.icon as any} size={26} color={humorInfo.color} />
+        <View
+          style={[
+            styles.registroIconCircle,
+            { backgroundColor: humorInfo.color + "20" },
+          ]}
+        >
+          <Ionicons
+            name={humorInfo.icon as any}
+            size={26}
+            color={humorInfo.color}
+          />
         </View>
         <View style={styles.registroTextos}>
           <Text style={styles.registroHumor}>{item.humor}</Text>
-          <Text style={styles.registroData}>{dataFormatada} • {horaFormatada}</Text>
+          <Text style={styles.registroData}>
+            {dataFormatada} • {horaFormatada}
+          </Text>
         </View>
         {item.anotacao ? (
           <Ionicons name="document-text-outline" size={18} color="#555" />
@@ -341,49 +478,55 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E94D89" />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#E94D89"
+          />
         }
       >
         {/* ===== CABEÇALHO COM SAUDAÇÃO ===== */}
-        <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View
+          style={[
+            styles.header,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+          ]}
+        >
           <View style={styles.headerLeft}>
             <Text style={styles.saudacao}>{getSaudacao()},</Text>
             <Text style={styles.nomeUsuario}>{userName} 👋</Text>
             <Text style={styles.dataHoje}>{getDataHoje()}</Text>
           </View>
           <View style={styles.headerRight}>
-            {/* Badge de status do dia */}
-            <View style={[styles.statusBadge, { backgroundColor: jaRegistrouHoje ? '#2D4A3E' : '#4A2D2D' }]}>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: jaRegistrouHoje ? "#2D4A3E" : "#4A2D2D" },
+              ]}
+            >
               <Ionicons
-                name={jaRegistrouHoje ? 'checkmark-circle' : 'alert-circle'}
+                name={jaRegistrouHoje ? "checkmark-circle" : "alert-circle"}
                 size={14}
-                color={jaRegistrouHoje ? '#4ECDC4' : '#FF6B6B'}
+                color={jaRegistrouHoje ? "#4ECDC4" : "#FF6B6B"}
               />
-              <Text style={[styles.statusBadgeText, { color: jaRegistrouHoje ? '#4ECDC4' : '#FF6B6B' }]}>
-                {jaRegistrouHoje ? 'Registrado ✓' : 'Pendente'}
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  { color: jaRegistrouHoje ? "#4ECDC4" : "#FF6B6B" },
+                ]}
+              >
+                {jaRegistrouHoje ? "Registrado ✓" : "Pendente"}
               </Text>
             </View>
             <TouchableOpacity
               style={styles.profileButton}
-              onPress={() => {
-                Alert.alert(
-                  'Sair da conta',
-                  'Deseja realmente sair?',
-                  [
-                    { text: 'Cancelar', style: 'cancel' },
-                    {
-                      text: 'Sair',
-                      style: 'destructive',
-                      onPress: async () => {
-                        await supabase.auth.signOut();
-                        router.replace('/');
-                      }
-                    },
-                  ]
-                );
-              }}
+              onPress={() => router.push("/configuracoes")}
             >
-              <Ionicons name="person-circle-outline" size={42} color="#E94D89" />
+              <Ionicons
+                name="person-circle-outline"
+                size={42}
+                color="#E94D89"
+              />
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -406,12 +549,14 @@ export default function HomeScreen() {
           </View>
           <View style={[styles.statCard, styles.statCardBorder2]}>
             <Ionicons name="trending-up-outline" size={22} color="#4ECDC4" />
-            <Text style={styles.statNumber}>{humorFrequente || '—'}</Text>
+            <Text style={styles.statNumber}>{humorFrequente || "—"}</Text>
             <Text style={styles.statLabel}>Mais frequente</Text>
           </View>
           <View style={[styles.statCard, styles.statCardBorder3]}>
             <Ionicons name="flame-outline" size={22} color="#FF6B6B" />
-            <Text style={styles.statNumber}>{totalRegistros > 0 ? '🔥' : '—'}</Text>
+            <Text style={styles.statNumber}>
+              {totalRegistros > 0 ? "🔥" : "—"}
+            </Text>
             <Text style={styles.statLabel}>Sequência</Text>
           </View>
         </View>
@@ -419,7 +564,9 @@ export default function HomeScreen() {
         {/* ===== SEÇÃO: COMO VOCÊ ESTÁ HOJE? ===== */}
         <View style={styles.moodSection}>
           <Text style={styles.moodSectionTitle}>Como você está hoje?</Text>
-          <Text style={styles.moodSectionSubtitle}>Toque em um emoji para registrar</Text>
+          <Text style={styles.moodSectionSubtitle}>
+            Toque em um emoji para registrar
+          </Text>
 
           <View style={styles.moodRow}>
             {mainMoods.map((mood) => (
@@ -429,14 +576,18 @@ export default function HomeScreen() {
                 style={styles.moodItem}
                 activeOpacity={0.7}
               >
-                <View style={[styles.emojiCircle, { backgroundColor: mood.color }]}>
+                <View
+                  style={[styles.emojiCircle, { backgroundColor: mood.color }]}
+                >
                   <Image
                     source={mood.emoji}
                     style={styles.emojiImage}
                     resizeMode="contain"
                   />
                 </View>
-                <Text style={[styles.moodLabel, { color: mood.color }]}>{mood.label}</Text>
+                <Text style={[styles.moodLabel, { color: mood.color }]}>
+                  {mood.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -446,7 +597,7 @@ export default function HomeScreen() {
         <View style={styles.recentSection}>
           <View style={styles.recentHeader}>
             <Text style={styles.recentTitle}>Registros Recentes</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/historico')}>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/historico")}>
               <Text style={styles.verTodosText}>Ver todos →</Text>
             </TouchableOpacity>
           </View>
@@ -473,8 +624,17 @@ export default function HomeScreen() {
         {/* ===== DICA DE BEM-ESTAR DO DIA ===== */}
         <View style={styles.dicaCard}>
           <View style={styles.dicaHeader}>
-            <View style={[styles.dicaIconCircle, { backgroundColor: dicaHoje.cor + '25' }]}>
-              <Ionicons name={dicaHoje.icone as any} size={24} color={dicaHoje.cor} />
+            <View
+              style={[
+                styles.dicaIconCircle,
+                { backgroundColor: dicaHoje.cor + "25" },
+              ]}
+            >
+              <Ionicons
+                name={dicaHoje.icone as any}
+                size={24}
+                color={dicaHoje.cor}
+              />
             </View>
             <View style={styles.dicaHeaderText}>
               <Text style={styles.dicaLabel}>Dica do dia</Text>
@@ -485,32 +645,56 @@ export default function HomeScreen() {
           <Text style={styles.dicaDescricao}>{dicaHoje.descricao}</Text>
         </View>
 
-        {/* Espaço extra para não ficar escondido atrás da tab bar */}
+        {/* Espaço extra */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* ===== MODAL: DETALHES DO REGISTRO (TELA DARK) ===== */}
+      {/* ===== MODAL: DETALHES DO REGISTRO ===== */}
       <Modal animationType="slide" visible={modalVisible} transparent={false}>
         <View style={styles.darkContainer}>
-          {/* Header do Modal */}
           <View style={styles.darkHeader}>
             <TouchableOpacity onPress={() => setModalVisible(false)}>
               <Ionicons name="close" size={32} color="#666" />
             </TouchableOpacity>
             <Text style={styles.darkHeaderTitle}>
-              {selectedMainMood ? `Sentindo-se ${selectedMainMood.label}` : 'Detalhes'}
+              {selectedMainMood
+                ? `Sentindo-se ${selectedMainMood.label}`
+                : "Detalhes"}
             </Text>
-            <TouchableOpacity onPress={handleFinalSave} style={styles.saveBtn}>
-              <Ionicons name="checkmark-circle" size={24} color="#E94D89" />
-              <Text style={styles.saveBtnText}>Salvar</Text>
+
+            {/* BOTÃO ATUALIZADO COM EFEITO DE CARREGAMENTO */}
+            <TouchableOpacity
+              onPress={handleFinalSave}
+              style={styles.saveBtn}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator
+                  size="small"
+                  color="#E94D89"
+                  style={{ marginRight: 5 }}
+                />
+              ) : (
+                <Ionicons name="checkmark-circle" size={24} color="#E94D89" />
+              )}
+              <Text style={styles.saveBtnText}>
+                {isSaving ? "Salvando..." : "Salvar"}
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={{ paddingHorizontal: 20 }}>
-            {/* Emoji selecionado em destaque */}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ paddingHorizontal: 20 }}
+          >
             {selectedMainMood && (
               <View style={styles.selectedMoodDisplay}>
-                <View style={[styles.selectedEmojiCircle, { backgroundColor: selectedMainMood.color }]}>
+                <View
+                  style={[
+                    styles.selectedEmojiCircle,
+                    { backgroundColor: selectedMainMood.color },
+                  ]}
+                >
                   <Image
                     source={selectedMainMood.emoji}
                     style={styles.selectedEmojiImage}
@@ -520,37 +704,48 @@ export default function HomeScreen() {
               </View>
             )}
 
-            {/* Seção: Emoções */}
             <Text style={styles.sectionTitle}>Emoções</Text>
             <View style={styles.darkCard}>
               <View style={styles.grid}>
-                {emotionsList.map(item => (
-                  <SelectableItem key={item.id} item={item} selected={selectedEmotion} onSelect={setSelectedEmotion} />
+                {emotionsList.map((item) => (
+                  <SelectableItem
+                    key={item.id}
+                    item={item}
+                    selected={selectedEmotion}
+                    onSelect={setSelectedEmotion}
+                  />
                 ))}
               </View>
             </View>
 
-            {/* Seção: Sono */}
             <Text style={styles.sectionTitle}>Sono</Text>
             <View style={styles.darkCard}>
               <View style={styles.grid}>
-                {sleepList.map(item => (
-                  <SelectableItem key={item.id} item={item} selected={selectedSleep} onSelect={setSelectedSleep} />
+                {sleepList.map((item) => (
+                  <SelectableItem
+                    key={item.id}
+                    item={item}
+                    selected={selectedSleep}
+                    onSelect={setSelectedSleep}
+                  />
                 ))}
               </View>
             </View>
 
-            {/* Seção: Saúde */}
             <Text style={styles.sectionTitle}>Saúde</Text>
             <View style={styles.darkCard}>
               <View style={styles.grid}>
-                {healthList.map(item => (
-                  <SelectableItem key={item.id} item={item} selected={selectedHealth} onSelect={setSelectedHealth} />
+                {healthList.map((item) => (
+                  <SelectableItem
+                    key={item.id}
+                    item={item}
+                    selected={selectedHealth}
+                    onSelect={setSelectedHealth}
+                  />
                 ))}
               </View>
             </View>
 
-            {/* Seção: Anotação rápida (TextInput) */}
             <Text style={styles.sectionTitle}>Anotação rápida</Text>
             <TextInput
               style={styles.darkInput}
@@ -568,423 +763,303 @@ export default function HomeScreen() {
   );
 }
 
-// =============================================
-// ESTILOS
-// =============================================
 const styles = StyleSheet.create({
-  // --- Loading ---
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  loadingText: {
-    color: '#666',
-    marginTop: 12,
-    fontFamily: 'Manrope-Regular',
-  },
-
-  // --- Container Principal ---
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 50,
-  },
-
-  // --- Header / Saudação ---
+  loadingText: { color: "#666", marginTop: 12, fontFamily: "Manrope-Regular" },
+  container: { flex: 1, backgroundColor: "#000" },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 50 },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 25,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  saudacao: {
-    fontSize: 16,
-    color: '#888',
-    fontFamily: 'Manrope-Regular',
-  },
+  headerLeft: { flex: 1 },
+  saudacao: { fontSize: 16, color: "#888", fontFamily: "Manrope-Regular" },
   nomeUsuario: {
     fontSize: 28,
-    color: '#fff',
-    fontFamily: 'Manrope-ExtraBold',
+    color: "#fff",
+    fontFamily: "Manrope-ExtraBold",
     marginTop: 2,
   },
   dataHoje: {
     fontSize: 14,
-    color: '#E94D89',
-    fontFamily: 'Manrope-Bold',
+    color: "#E94D89",
+    fontFamily: "Manrope-Bold",
     marginTop: 4,
   },
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
+  headerRight: { alignItems: "flex-end", gap: 8 },
   statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
     gap: 5,
   },
-  statusBadgeText: {
-    fontSize: 11,
-    fontFamily: 'Manrope-Bold',
-  },
-  profileButton: {
-    padding: 5,
-  },
-
-  // --- Frase Motivacional ---
+  statusBadgeText: { fontSize: 11, fontFamily: "Manrope-Bold" },
+  profileButton: { padding: 5 },
   quoteCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: "#1A1A1A",
     borderRadius: 20,
     padding: 20,
     marginBottom: 20,
     borderLeftWidth: 3,
-    borderLeftColor: '#E94D89',
+    borderLeftColor: "#E94D89",
   },
-  quoteIconRow: {
-    marginBottom: 8,
-  },
-  quoteIcon: {
-    fontSize: 22,
-  },
+  quoteIconRow: { marginBottom: 8 },
+  quoteIcon: { fontSize: 22 },
   quoteText: {
     fontSize: 16,
-    color: '#ddd',
-    fontFamily: 'Manrope-Bold',
+    color: "#ddd",
+    fontFamily: "Manrope-Bold",
     lineHeight: 24,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   quoteAuthor: {
     fontSize: 12,
-    color: '#666',
-    fontFamily: 'Manrope-Regular',
+    color: "#666",
+    fontFamily: "Manrope-Regular",
     marginTop: 8,
-    textAlign: 'right',
+    textAlign: "right",
   },
-
-  // --- Cards de Estatísticas ---
   statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 30,
     gap: 10,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: "#1A1A1A",
     borderRadius: 16,
     padding: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: "#2A2A2A",
   },
-  statCardBorder1: {
-    borderColor: '#FFD93D30',
-  },
-  statCardBorder2: {
-    borderColor: '#4ECDC430',
-  },
-  statCardBorder3: {
-    borderColor: '#FF6B6B30',
-  },
+  statCardBorder1: { borderColor: "#FFD93D30" },
+  statCardBorder2: { borderColor: "#4ECDC430" },
+  statCardBorder3: { borderColor: "#FF6B6B30" },
   statNumber: {
     fontSize: 20,
-    color: '#fff',
-    fontFamily: 'Manrope-ExtraBold',
+    color: "#fff",
+    fontFamily: "Manrope-ExtraBold",
     marginTop: 6,
   },
   statLabel: {
     fontSize: 11,
-    color: '#666',
-    fontFamily: 'Manrope-Regular',
+    color: "#666",
+    fontFamily: "Manrope-Regular",
     marginTop: 2,
-    textAlign: 'center',
+    textAlign: "center",
   },
-
-  // --- Seção de Humor ---
   moodSection: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: "#1A1A1A",
     borderRadius: 24,
     padding: 24,
     marginBottom: 25,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E94D8920',
+    borderColor: "#E94D8920",
   },
   moodSectionTitle: {
     fontSize: 22,
-    color: '#fff',
-    fontFamily: 'Manrope-ExtraBold',
-    textAlign: 'center',
+    color: "#fff",
+    fontFamily: "Manrope-ExtraBold",
+    textAlign: "center",
   },
   moodSectionSubtitle: {
     fontSize: 14,
-    color: '#666',
-    fontFamily: 'Manrope-Regular',
+    color: "#666",
+    fontFamily: "Manrope-Regular",
     marginTop: 4,
     marginBottom: 24,
   },
   moodRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
   },
-  moodItem: {
-    alignItems: 'center',
-    width: 75,
-  },
+  moodItem: { alignItems: "center", width: 75 },
   emojiCircle: {
     width: 65,
     height: 65,
     borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
     elevation: 6,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
   },
-  emojiImage: {
-    width: 42,
-    height: 42,
-  },
-  moodLabel: {
-    fontSize: 13,
-    fontFamily: 'Manrope-Bold',
-    textAlign: 'center',
-  },
-
-  // --- Seção de Registros Recentes ---
-  recentSection: {
-    marginBottom: 10,
-  },
+  emojiImage: { width: 42, height: 42 },
+  moodLabel: { fontSize: 13, fontFamily: "Manrope-Bold", textAlign: "center" },
+  recentSection: { marginBottom: 10 },
   recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
-  recentTitle: {
-    fontSize: 18,
-    color: '#fff',
-    fontFamily: 'Manrope-ExtraBold',
-  },
-  verTodosText: {
-    fontSize: 14,
-    color: '#E94D89',
-    fontFamily: 'Manrope-Bold',
-  },
-  registrosList: {
-    gap: 10,
-  },
+  recentTitle: { fontSize: 18, color: "#fff", fontFamily: "Manrope-ExtraBold" },
+  verTodosText: { fontSize: 14, color: "#E94D89", fontFamily: "Manrope-Bold" },
+  registrosList: { gap: 10 },
   registroCard: {
-    flexDirection: 'row',
-    backgroundColor: '#1A1A1A',
+    flexDirection: "row",
+    backgroundColor: "#1A1A1A",
     borderRadius: 16,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   registroIconCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  registroTextos: {
-    flex: 1,
-    marginLeft: 14,
-  },
-  registroHumor: {
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Manrope-Bold',
-  },
+  registroTextos: { flex: 1, marginLeft: 14 },
+  registroHumor: { fontSize: 16, color: "#fff", fontFamily: "Manrope-Bold" },
   registroData: {
     fontSize: 12,
-    color: '#666',
-    fontFamily: 'Manrope-Regular',
+    color: "#666",
+    fontFamily: "Manrope-Regular",
     marginTop: 2,
   },
-
-  // --- Estado Vazio ---
   emptyState: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: "#1A1A1A",
     borderRadius: 20,
     padding: 40,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 16,
-    color: '#888',
-    fontFamily: 'Manrope-Bold',
+    color: "#888",
+    fontFamily: "Manrope-Bold",
     marginTop: 12,
   },
   emptySubtext: {
     fontSize: 13,
-    color: '#555',
-    fontFamily: 'Manrope-Regular',
+    color: "#555",
+    fontFamily: "Manrope-Regular",
     marginTop: 6,
-    textAlign: 'center',
+    textAlign: "center",
   },
-
-  // --- Modal Dark (Detalhes) ---
-  darkContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
+  darkContainer: { flex: 1, backgroundColor: "#000" },
   darkHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 20,
     paddingTop: 50,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  darkHeaderTitle: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Manrope-Bold',
-  },
-  saveBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  darkHeaderTitle: { color: "#fff", fontSize: 16, fontFamily: "Manrope-Bold" },
+  saveBtn: { flexDirection: "row", alignItems: "center" },
   saveBtnText: {
-    color: '#E94D89',
-    fontFamily: 'Manrope-ExtraBold',
+    color: "#E94D89",
+    fontFamily: "Manrope-ExtraBold",
     marginLeft: 8,
     fontSize: 18,
   },
-  selectedMoodDisplay: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+  selectedMoodDisplay: { alignItems: "center", marginBottom: 20 },
   selectedEmojiCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
   },
-  selectedEmojiImage: {
-    width: 55,
-    height: 55,
-  },
+  selectedEmojiImage: { width: 55, height: 55 },
   sectionTitle: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontFamily: 'Manrope-ExtraBold',
+    fontFamily: "Manrope-ExtraBold",
     marginTop: 20,
     marginBottom: 15,
   },
-  darkCard: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 20,
-    padding: 20,
-  },
+  darkCard: { backgroundColor: "#1A1A1A", borderRadius: 20, padding: 20 },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
   },
-  iconItem: {
-    alignItems: 'center',
-    width: '25%',
-    marginBottom: 15,
-  },
+  iconItem: { alignItems: "center", width: "25%", marginBottom: 15 },
   iconCircle: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#2A2A2A',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#2A2A2A",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 5,
   },
-  iconCircleActive: {
-    backgroundColor: '#E94D89',
-  },
+  iconCircleActive: { backgroundColor: "#E94D89" },
   iconLabel: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 12,
-    textAlign: 'center',
-    fontFamily: 'Manrope-Bold',
+    textAlign: "center",
+    fontFamily: "Manrope-Bold",
   },
-  labelActive: {
-    color: '#E94D89',
-  },
+  labelActive: { color: "#E94D89" },
   darkInput: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: "#1A1A1A",
     borderRadius: 16,
     padding: 16,
-    color: '#fff',
+    color: "#fff",
     height: 120,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
     marginTop: 5,
-    fontFamily: 'Manrope-Regular',
+    fontFamily: "Manrope-Regular",
     fontSize: 15,
   },
-
-  // --- Dica de Bem-Estar ---
   dicaCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: "#1A1A1A",
     borderRadius: 20,
     padding: 20,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: "#2A2A2A",
   },
-  dicaHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
+  dicaHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   dicaIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
-  dicaHeaderText: {
-    flex: 1,
-    marginLeft: 12,
-  },
+  dicaHeaderText: { flex: 1, marginLeft: 12 },
   dicaLabel: {
     fontSize: 11,
-    color: '#666',
-    fontFamily: 'Manrope-Regular',
-    textTransform: 'uppercase',
+    color: "#666",
+    fontFamily: "Manrope-Regular",
+    textTransform: "uppercase",
     letterSpacing: 1,
   },
   dicaTitulo: {
     fontSize: 17,
-    color: '#fff',
-    fontFamily: 'Manrope-ExtraBold',
+    color: "#fff",
+    fontFamily: "Manrope-ExtraBold",
     marginTop: 2,
   },
   dicaDescricao: {
     fontSize: 14,
-    color: '#999',
-    fontFamily: 'Manrope-Regular',
+    color: "#999",
+    fontFamily: "Manrope-Regular",
     lineHeight: 20,
   },
 });
