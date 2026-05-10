@@ -1,3 +1,5 @@
+// Tela Principal do app - onde o usuario resume o seu dia, ve uma frase motivacional, dicas e etc.
+
 import {
   Manrope_400Regular,
   Manrope_700Bold,
@@ -6,6 +8,7 @@ import {
 } from "@expo-google-fonts/manrope";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -156,7 +159,7 @@ interface Registro {
   nivel_saude: string;
   anotacao?: string;
   atividades?: string;
-  user_id: string; // <-- Corrigido para user_id
+  user_id: string;
 }
 
 // =============================================
@@ -167,7 +170,7 @@ export default function HomeScreen() {
 
   // Estados do Modal de registro
   const [modalVisible, setModalVisible] = useState(false);
-  const [isSaving, setIsSaving] = useState(false); // NOVO ESTADO DE LOADING NO BOTÃO
+  const [isSaving, setIsSaving] = useState(false);
   const [selectedMainMood, setSelectedMainMood] = useState<any>(null);
   const [selectedEmotion, setSelectedEmotion] = useState("");
   const [selectedSleep, setSelectedSleep] = useState("");
@@ -187,7 +190,7 @@ export default function HomeScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
-  // Frase e dica do dia (baseadas no dia do ano)
+  // Frase e dica do dia
   const diaDoAno = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) /
       86400000,
@@ -201,10 +204,6 @@ export default function HomeScreen() {
     "Manrope-Bold": Manrope_700Bold,
     "Manrope-Regular": Manrope_400Regular,
   });
-
-  // =============================================
-  // FUNÇÕES DE DADOS (SUPABASE)
-  // =============================================
 
   // Buscar dados do usuário logado
   const fetchUserData = async () => {
@@ -224,7 +223,6 @@ export default function HomeScreen() {
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    // ATUALIZADO: Buscar na tabela 'registros' e coluna 'user_id'
     const { data, error } = await supabase
       .from("registros")
       .select("*")
@@ -256,7 +254,6 @@ export default function HomeScreen() {
       console.error("Erro ao buscar registros:", error);
     }
 
-    // Agora os loadings fecham no lugar certo
     setLoading(false);
     setRefreshing(false);
   };
@@ -289,19 +286,14 @@ export default function HomeScreen() {
     fetchRegistros();
   };
 
-  // =============================================
-  // FUNÇÕES DE INTERAÇÃO
-  // =============================================
-
   const handleMainMoodSelect = (mood: any) => {
     setSelectedMainMood(mood);
     setModalVisible(true);
   };
 
-  // ATUALIZADO: Função de salvar blindada e com Loading
   const handleFinalSave = async () => {
     try {
-      setIsSaving(true); // Liga a rodinha de carregamento do botão
+      setIsSaving(true);
 
       const {
         data: { user },
@@ -317,12 +309,11 @@ export default function HomeScreen() {
         return;
       }
 
-      // ATUALIZADO: Salvar na tabela 'registros'
       const { error } = await supabase.from("registros").insert([
         {
           humor: selectedMainMood.value,
-          user_id: user.id, // ATUALIZADO: Nome da coluna correto
-          atividades: selectedEmotion, // Salvando a emoção na coluna certa
+          user_id: user.id,
+          atividades: selectedEmotion,
           nivel_sono: selectedSleep,
           nivel_saude: selectedHealth,
           anotacao: note,
@@ -346,13 +337,9 @@ export default function HomeScreen() {
       console.error("Erro inesperado:", err);
       Alert.alert("Erro", "Ocorreu um problema de conexão. Tente novamente.");
     } finally {
-      setIsSaving(false); // Desliga a rodinha independente de dar certo ou errado
+      setIsSaving(false);
     }
   };
-
-  // =============================================
-  // FUNÇÕES AUXILIARES DE FORMATAÇÃO
-  // =============================================
 
   const getSaudacao = () => {
     const hora = new Date().getHours();
@@ -387,21 +374,22 @@ export default function HomeScreen() {
     }
   };
 
-  // =============================================
-  // LOADING DA TELA INICIAL
-  // =============================================
   if (!fontsLoaded || loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E94D89" />
-        <Text style={styles.loadingText}>Carregando...</Text>
-      </View>
+      <LinearGradient
+        colors={["#41386B", "#A88AED", "#CBD83B"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.loadingContainer}
+      >
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={[styles.loadingText, { color: "#fff" }]}>
+          Carregando...
+        </Text>
+      </LinearGradient>
     );
   }
 
-  // =============================================
-  // COMPONENTES AUXILIARES
-  // =============================================
   const SelectableItem = ({ item, selected, onSelect }: any) => (
     <TouchableOpacity
       onPress={() => onSelect(item.label)}
@@ -463,315 +451,334 @@ export default function HomeScreen() {
           </Text>
         </View>
         {item.anotacao ? (
-          <Ionicons name="document-text-outline" size={18} color="#555" />
+          <Ionicons name="document-text-outline" size={18} color="#aaa" />
         ) : null}
       </TouchableOpacity>
     );
   };
 
   // =============================================
-  // RENDER PRINCIPAL
+  // RENDER PRINCIPAL (AGORA ENVELOPADO NO LINEAR GRADIENT)
   // =============================================
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#E94D89"
-          />
-        }
-      >
-        {/* ===== CABEÇALHO COM SAUDAÇÃO ===== */}
-        <Animated.View
-          style={[
-            styles.header,
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-          ]}
+    <LinearGradient
+      colors={["#41386B", "#A88AED", "#CBD83B"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#fff"
+            />
+          }
         >
-          <View style={styles.headerLeft}>
-            <Text style={styles.saudacao}>{getSaudacao()},</Text>
-            <Text style={styles.nomeUsuario}>{userName} 👋</Text>
-            <Text style={styles.dataHoje}>{getDataHoje()}</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: jaRegistrouHoje ? "#2D4A3E" : "#4A2D2D" },
-              ]}
-            >
-              <Ionicons
-                name={jaRegistrouHoje ? "checkmark-circle" : "alert-circle"}
-                size={14}
-                color={jaRegistrouHoje ? "#4ECDC4" : "#FF6B6B"}
-              />
-              <Text
+          {/* ===== CABEÇALHO COM SAUDAÇÃO ===== */}
+          <Animated.View
+            style={[
+              styles.header,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+            ]}
+          >
+            <View style={styles.headerLeft}>
+              <Text style={styles.saudacao}>{getSaudacao()},</Text>
+              <Text style={styles.nomeUsuario}>{userName} 👋</Text>
+              <Text style={styles.dataHoje}>{getDataHoje()}</Text>
+            </View>
+            <View style={styles.headerRight}>
+              <View
                 style={[
-                  styles.statusBadgeText,
-                  { color: jaRegistrouHoje ? "#4ECDC4" : "#FF6B6B" },
+                  styles.statusBadge,
+                  { backgroundColor: jaRegistrouHoje ? "#2D4A3E" : "#4A2D2D" },
                 ]}
               >
-                {jaRegistrouHoje ? "Registrado ✓" : "Pendente"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => router.push("/configuracoes")}
-            >
-              <Ionicons
-                name="person-circle-outline"
-                size={42}
-                color="#E94D89"
-              />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        {/* ===== FRASE MOTIVACIONAL DO DIA ===== */}
-        <Animated.View style={[styles.quoteCard, { opacity: fadeAnim }]}>
-          <View style={styles.quoteIconRow}>
-            <Text style={styles.quoteIcon}>💭</Text>
-          </View>
-          <Text style={styles.quoteText}>{fraseHoje.texto}</Text>
-          <Text style={styles.quoteAuthor}>— {fraseHoje.autor}</Text>
-        </Animated.View>
-
-        {/* ===== CARDS DE ESTATÍSTICAS RÁPIDAS ===== */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, styles.statCardBorder1]}>
-            <Ionicons name="calendar-outline" size={22} color="#FFD93D" />
-            <Text style={styles.statNumber}>{totalRegistros}</Text>
-            <Text style={styles.statLabel}>Registros</Text>
-          </View>
-          <View style={[styles.statCard, styles.statCardBorder2]}>
-            <Ionicons name="trending-up-outline" size={22} color="#4ECDC4" />
-            <Text style={styles.statNumber}>{humorFrequente || "—"}</Text>
-            <Text style={styles.statLabel}>Mais frequente</Text>
-          </View>
-          <View style={[styles.statCard, styles.statCardBorder3]}>
-            <Ionicons name="flame-outline" size={22} color="#FF6B6B" />
-            <Text style={styles.statNumber}>
-              {totalRegistros > 0 ? "🔥" : "—"}
-            </Text>
-            <Text style={styles.statLabel}>Sequência</Text>
-          </View>
-        </View>
-
-        {/* ===== SEÇÃO: COMO VOCÊ ESTÁ HOJE? ===== */}
-        <View style={styles.moodSection}>
-          <Text style={styles.moodSectionTitle}>Como você está hoje?</Text>
-          <Text style={styles.moodSectionSubtitle}>
-            Toque em um emoji para registrar
-          </Text>
-
-          <View style={styles.moodRow}>
-            {mainMoods.map((mood) => (
-              <TouchableOpacity
-                key={mood.value}
-                onPress={() => handleMainMoodSelect(mood)}
-                style={styles.moodItem}
-                activeOpacity={0.7}
-              >
-                <View
-                  style={[styles.emojiCircle, { backgroundColor: mood.color }]}
-                >
-                  <Image
-                    source={mood.emoji}
-                    style={styles.emojiImage}
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text style={[styles.moodLabel, { color: mood.color }]}>
-                  {mood.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* ===== SEÇÃO: REGISTROS RECENTES ===== */}
-        <View style={styles.recentSection}>
-          <View style={styles.recentHeader}>
-            <Text style={styles.recentTitle}>Registros Recentes</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/historico")}>
-              <Text style={styles.verTodosText}>Ver todos →</Text>
-            </TouchableOpacity>
-          </View>
-
-          {registros.length > 0 ? (
-            <FlatList
-              data={registros}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderRegistroItem}
-              scrollEnabled={false}
-              contentContainerStyle={styles.registrosList}
-            />
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="book-outline" size={48} color="#333" />
-              <Text style={styles.emptyText}>Nenhum registro ainda</Text>
-              <Text style={styles.emptySubtext}>
-                Comece registrando como você se sente hoje! ✨
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* ===== DICA DE BEM-ESTAR DO DIA ===== */}
-        <View style={styles.dicaCard}>
-          <View style={styles.dicaHeader}>
-            <View
-              style={[
-                styles.dicaIconCircle,
-                { backgroundColor: dicaHoje.cor + "25" },
-              ]}
-            >
-              <Ionicons
-                name={dicaHoje.icone as any}
-                size={24}
-                color={dicaHoje.cor}
-              />
-            </View>
-            <View style={styles.dicaHeaderText}>
-              <Text style={styles.dicaLabel}>Dica do dia</Text>
-              <Text style={styles.dicaTitulo}>{dicaHoje.titulo}</Text>
-            </View>
-            <Ionicons name="sparkles" size={18} color="#FFD93D" />
-          </View>
-          <Text style={styles.dicaDescricao}>{dicaHoje.descricao}</Text>
-        </View>
-
-        {/* Espaço extra */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
-
-      {/* ===== MODAL: DETALHES DO REGISTRO ===== */}
-      <Modal animationType="slide" visible={modalVisible} transparent={false}>
-        <View style={styles.darkContainer}>
-          <View style={styles.darkHeader}>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Ionicons name="close" size={32} color="#666" />
-            </TouchableOpacity>
-            <Text style={styles.darkHeaderTitle}>
-              {selectedMainMood
-                ? `Sentindo-se ${selectedMainMood.label}`
-                : "Detalhes"}
-            </Text>
-
-            {/* BOTÃO ATUALIZADO COM EFEITO DE CARREGAMENTO */}
-            <TouchableOpacity
-              onPress={handleFinalSave}
-              style={styles.saveBtn}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <ActivityIndicator
-                  size="small"
-                  color="#E94D89"
-                  style={{ marginRight: 5 }}
+                <Ionicons
+                  name={jaRegistrouHoje ? "checkmark-circle" : "alert-circle"}
+                  size={14}
+                  color={jaRegistrouHoje ? "#4ECDC4" : "#FF6B6B"}
                 />
-              ) : (
-                <Ionicons name="checkmark-circle" size={24} color="#E94D89" />
-              )}
-              <Text style={styles.saveBtnText}>
-                {isSaving ? "Salvando..." : "Salvar"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            style={{ paddingHorizontal: 20 }}
-          >
-            {selectedMainMood && (
-              <View style={styles.selectedMoodDisplay}>
-                <View
+                <Text
                   style={[
-                    styles.selectedEmojiCircle,
-                    { backgroundColor: selectedMainMood.color },
+                    styles.statusBadgeText,
+                    { color: jaRegistrouHoje ? "#4ECDC4" : "#FF6B6B" },
                   ]}
                 >
-                  <Image
-                    source={selectedMainMood.emoji}
-                    style={styles.selectedEmojiImage}
-                    resizeMode="contain"
-                  />
-                </View>
+                  {jaRegistrouHoje ? "Registrado ✓" : "Pendente"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={() => router.push("/configuracoes")}
+              >
+                <Ionicons
+                  name="person-circle-outline"
+                  size={42}
+                  color="#fff" // Deixei branco para destacar no degradê
+                />
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+
+          {/* ===== FRASE MOTIVACIONAL DO DIA ===== */}
+          <Animated.View style={[styles.quoteCard, { opacity: fadeAnim }]}>
+            <View style={styles.quoteIconRow}>
+              <Text style={styles.quoteIcon}>💭</Text>
+            </View>
+            <Text style={styles.quoteText}>{fraseHoje.texto}</Text>
+            <Text style={styles.quoteAuthor}>— {fraseHoje.autor}</Text>
+          </Animated.View>
+
+          {/* ===== CARDS DE ESTATÍSTICAS RÁPIDAS ===== */}
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, styles.statCardBorder1]}>
+              <Ionicons name="calendar-outline" size={22} color="#FFD93D" />
+              <Text style={styles.statNumber}>{totalRegistros}</Text>
+              <Text style={styles.statLabel}>Registros</Text>
+            </View>
+            <View style={[styles.statCard, styles.statCardBorder2]}>
+              <Ionicons name="trending-up-outline" size={22} color="#4ECDC4" />
+              <Text style={styles.statNumber}>{humorFrequente || "—"}</Text>
+              <Text style={styles.statLabel}>Mais frequente</Text>
+            </View>
+            <View style={[styles.statCard, styles.statCardBorder3]}>
+              <Ionicons name="flame-outline" size={22} color="#FF6B6B" />
+              <Text style={styles.statNumber}>
+                {totalRegistros > 0 ? "🔥" : "—"}
+              </Text>
+              <Text style={styles.statLabel}>Sequência</Text>
+            </View>
+          </View>
+
+          {/* ===== SEÇÃO: COMO VOCÊ ESTÁ HOJE? ===== */}
+          <View style={styles.moodSection}>
+            <Text style={styles.moodSectionTitle}>Como você está hoje?</Text>
+            <Text style={styles.moodSectionSubtitle}>
+              Toque em um emoji para registrar
+            </Text>
+
+            <View style={styles.moodRow}>
+              {mainMoods.map((mood) => (
+                <TouchableOpacity
+                  key={mood.value}
+                  onPress={() => handleMainMoodSelect(mood)}
+                  style={styles.moodItem}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.emojiCircle,
+                      { backgroundColor: mood.color },
+                    ]}
+                  >
+                    <Image
+                      source={mood.emoji}
+                      style={styles.emojiImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                  <Text style={[styles.moodLabel, { color: mood.color }]}>
+                    {mood.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* ===== SEÇÃO: REGISTROS RECENTES ===== */}
+          <View style={styles.recentSection}>
+            <View style={styles.recentHeader}>
+              <Text style={styles.recentTitle}>Registros Recentes</Text>
+              <TouchableOpacity
+                onPress={() => router.push("/(tabs)/historico")}
+              >
+                <Text style={styles.verTodosText}>Ver todos →</Text>
+              </TouchableOpacity>
+            </View>
+
+            {registros.length > 0 ? (
+              <FlatList
+                data={registros}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderRegistroItem}
+                scrollEnabled={false}
+                contentContainerStyle={styles.registrosList}
+              />
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="book-outline" size={48} color="#fff" />
+                <Text style={styles.emptyText}>Nenhum registro ainda</Text>
+                <Text style={styles.emptySubtext}>
+                  Comece registrando como você se sente hoje! ✨
+                </Text>
               </View>
             )}
+          </View>
 
-            <Text style={styles.sectionTitle}>Emoções</Text>
-            <View style={styles.darkCard}>
-              <View style={styles.grid}>
-                {emotionsList.map((item) => (
-                  <SelectableItem
-                    key={item.id}
-                    item={item}
-                    selected={selectedEmotion}
-                    onSelect={setSelectedEmotion}
-                  />
-                ))}
+          {/* ===== DICA DE BEM-ESTAR DO DIA ===== */}
+          <View style={styles.dicaCard}>
+            <View style={styles.dicaHeader}>
+              <View
+                style={[
+                  styles.dicaIconCircle,
+                  { backgroundColor: dicaHoje.cor + "25" },
+                ]}
+              >
+                <Ionicons
+                  name={dicaHoje.icone as any}
+                  size={24}
+                  color={dicaHoje.cor}
+                />
               </View>
+              <View style={styles.dicaHeaderText}>
+                <Text style={styles.dicaLabel}>Dica do dia</Text>
+                <Text style={styles.dicaTitulo}>{dicaHoje.titulo}</Text>
+              </View>
+              <Ionicons name="sparkles" size={18} color="#FFD93D" />
+            </View>
+            <Text style={styles.dicaDescricao}>{dicaHoje.descricao}</Text>
+          </View>
+
+          {/* Espaço extra */}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+      </SafeAreaView>
+
+      {/* ===== MODAL: DETALHES DO REGISTRO (TAMBÉM ENVELOPADO) ===== */}
+      <Modal animationType="slide" visible={modalVisible} transparent={true}>
+        <LinearGradient
+          colors={["#41386B", "#A88AED", "#CBD83B"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.darkContainer}
+        >
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={styles.darkHeader}>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={32} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.darkHeaderTitle}>
+                {selectedMainMood
+                  ? `Sentindo-se ${selectedMainMood.label}`
+                  : "Detalhes"}
+              </Text>
+
+              <TouchableOpacity
+                onPress={handleFinalSave}
+                style={styles.saveBtn}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#fff"
+                    style={{ marginRight: 5 }}
+                  />
+                ) : (
+                  <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                )}
+                <Text style={[styles.saveBtnText, { color: "#fff" }]}>
+                  {isSaving ? "Salvando..." : "Salvar"}
+                </Text>
+              </TouchableOpacity>
             </View>
 
-            <Text style={styles.sectionTitle}>Sono</Text>
-            <View style={styles.darkCard}>
-              <View style={styles.grid}>
-                {sleepList.map((item) => (
-                  <SelectableItem
-                    key={item.id}
-                    item={item}
-                    selected={selectedSleep}
-                    onSelect={setSelectedSleep}
-                  />
-                ))}
-              </View>
-            </View>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={{ paddingHorizontal: 20 }}
+            >
+              {selectedMainMood && (
+                <View style={styles.selectedMoodDisplay}>
+                  <View
+                    style={[
+                      styles.selectedEmojiCircle,
+                      { backgroundColor: selectedMainMood.color },
+                    ]}
+                  >
+                    <Image
+                      source={selectedMainMood.emoji}
+                      style={styles.selectedEmojiImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                </View>
+              )}
 
-            <Text style={styles.sectionTitle}>Saúde</Text>
-            <View style={styles.darkCard}>
-              <View style={styles.grid}>
-                {healthList.map((item) => (
-                  <SelectableItem
-                    key={item.id}
-                    item={item}
-                    selected={selectedHealth}
-                    onSelect={setSelectedHealth}
-                  />
-                ))}
+              <Text style={styles.sectionTitle}>Emoções</Text>
+              <View style={styles.darkCard}>
+                <View style={styles.grid}>
+                  {emotionsList.map((item) => (
+                    <SelectableItem
+                      key={item.id}
+                      item={item}
+                      selected={selectedEmotion}
+                      onSelect={setSelectedEmotion}
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <Text style={styles.sectionTitle}>Anotação rápida</Text>
-            <TextInput
-              style={styles.darkInput}
-              placeholder="Como foi o seu dia? Escreva aqui..."
-              placeholderTextColor="#444"
-              multiline
-              value={note}
-              onChangeText={setNote}
-            />
-            <View style={{ height: 50 }} />
-          </ScrollView>
-        </View>
+              <Text style={styles.sectionTitle}>Sono</Text>
+              <View style={styles.darkCard}>
+                <View style={styles.grid}>
+                  {sleepList.map((item) => (
+                    <SelectableItem
+                      key={item.id}
+                      item={item}
+                      selected={selectedSleep}
+                      onSelect={setSelectedSleep}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <Text style={styles.sectionTitle}>Saúde</Text>
+              <View style={styles.darkCard}>
+                <View style={styles.grid}>
+                  {healthList.map((item) => (
+                    <SelectableItem
+                      key={item.id}
+                      item={item}
+                      selected={selectedHealth}
+                      onSelect={setSelectedHealth}
+                    />
+                  ))}
+                </View>
+              </View>
+
+              <Text style={styles.sectionTitle}>Anotação rápida</Text>
+              <TextInput
+                style={styles.darkInput}
+                placeholder="Como foi o seu dia? Escreva aqui..."
+                placeholderTextColor="#aaa"
+                multiline
+                value={note}
+                onChangeText={setNote}
+              />
+              <View style={{ height: 50 }} />
+            </ScrollView>
+          </SafeAreaView>
+        </LinearGradient>
       </Modal>
-    </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
   },
   loadingText: { color: "#666", marginTop: 12, fontFamily: "Manrope-Regular" },
-  container: { flex: 1, backgroundColor: "#000" },
+  container: {
+    flex: 1,
+  },
   scrollContent: { paddingHorizontal: 20, paddingTop: 50 },
   header: {
     flexDirection: "row",
@@ -780,7 +787,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   headerLeft: { flex: 1 },
-  saudacao: { fontSize: 16, color: "#888", fontFamily: "Manrope-Regular" },
+  saudacao: { fontSize: 16, color: "#fff", fontFamily: "Manrope-Regular" }, // Mudei para branco pra contrastar melhor com o fundo
   nomeUsuario: {
     fontSize: 28,
     color: "#fff",
@@ -789,7 +796,7 @@ const styles = StyleSheet.create({
   },
   dataHoje: {
     fontSize: 14,
-    color: "#E94D89",
+    color: "#CBD83B", // Corrigido pra verde limão
     fontFamily: "Manrope-Bold",
     marginTop: 4,
   },
@@ -810,7 +817,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 20,
     borderLeftWidth: 3,
-    borderLeftColor: "#E94D89",
+    borderLeftColor: "#CBD83B", // Mudei pra verde limão
   },
   quoteIconRow: { marginBottom: 8 },
   quoteIcon: { fontSize: 22 },
@@ -823,7 +830,7 @@ const styles = StyleSheet.create({
   },
   quoteAuthor: {
     fontSize: 12,
-    color: "#666",
+    color: "#aaa",
     fontFamily: "Manrope-Regular",
     marginTop: 8,
     textAlign: "right",
@@ -855,7 +862,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: "#666",
+    color: "#aaa",
     fontFamily: "Manrope-Regular",
     marginTop: 2,
     textAlign: "center",
@@ -867,7 +874,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#E94D8920",
+    borderColor: "#A88AED", // Mudei a bordinha pra roxo
   },
   moodSectionTitle: {
     fontSize: 22,
@@ -877,7 +884,7 @@ const styles = StyleSheet.create({
   },
   moodSectionSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#aaa",
     fontFamily: "Manrope-Regular",
     marginTop: 4,
     marginBottom: 24,
@@ -911,7 +918,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   recentTitle: { fontSize: 18, color: "#fff", fontFamily: "Manrope-ExtraBold" },
-  verTodosText: { fontSize: 14, color: "#E94D89", fontFamily: "Manrope-Bold" },
+  verTodosText: { fontSize: 14, color: "#CBD83B", fontFamily: "Manrope-Bold" },
   registrosList: { gap: 10 },
   registroCard: {
     flexDirection: "row",
@@ -931,7 +938,7 @@ const styles = StyleSheet.create({
   registroHumor: { fontSize: 16, color: "#fff", fontFamily: "Manrope-Bold" },
   registroData: {
     fontSize: 12,
-    color: "#666",
+    color: "#aaa",
     fontFamily: "Manrope-Regular",
     marginTop: 2,
   },
@@ -943,18 +950,20 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: "#888",
+    color: "#fff",
     fontFamily: "Manrope-Bold",
     marginTop: 12,
   },
   emptySubtext: {
     fontSize: 13,
-    color: "#555",
+    color: "#aaa",
     fontFamily: "Manrope-Regular",
     marginTop: 6,
     textAlign: "center",
   },
-  darkContainer: { flex: 1, backgroundColor: "#000" },
+  darkContainer: {
+    flex: 1,
+  },
   darkHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -965,7 +974,6 @@ const styles = StyleSheet.create({
   darkHeaderTitle: { color: "#fff", fontSize: 16, fontFamily: "Manrope-Bold" },
   saveBtn: { flexDirection: "row", alignItems: "center" },
   saveBtnText: {
-    color: "#E94D89",
     fontFamily: "Manrope-ExtraBold",
     marginLeft: 8,
     fontSize: 18,
@@ -1007,14 +1015,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
-  iconCircleActive: { backgroundColor: "#E94D89" },
+  iconCircleActive: { backgroundColor: "#A88AED" }, // Botão ativo fica roxinho
   iconLabel: {
     color: "#ffffff",
     fontSize: 12,
     textAlign: "center",
     fontFamily: "Manrope-Bold",
   },
-  labelActive: { color: "#E94D89" },
+  labelActive: { color: "#A88AED" },
   darkInput: {
     backgroundColor: "#1A1A1A",
     borderRadius: 16,
@@ -1045,7 +1053,7 @@ const styles = StyleSheet.create({
   dicaHeaderText: { flex: 1, marginLeft: 12 },
   dicaLabel: {
     fontSize: 11,
-    color: "#666",
+    color: "#aaa",
     fontFamily: "Manrope-Regular",
     textTransform: "uppercase",
     letterSpacing: 1,
@@ -1058,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   dicaDescricao: {
     fontSize: 14,
-    color: "#999",
+    color: "#ccc",
     fontFamily: "Manrope-Regular",
     lineHeight: 20,
   },

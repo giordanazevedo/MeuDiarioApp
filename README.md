@@ -8,9 +8,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npm install
+
+   Antes de começar: git pull origin main (Baixa as novidades).
    ```
 
-2. Start the app
+2. Depois de editar:
+   git add .
+   git commit -m "Explique o que você mudou"
+   git push origin main
+
+   ```
+
+   ```
+
+3. Start the app
 
    ```bash
    npx expo start
