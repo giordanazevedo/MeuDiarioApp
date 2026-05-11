@@ -1,23 +1,19 @@
-import React, { useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { ThemeContext } from './src/theme-context';
 
 // REMOVIDO: unstable_settings que forçava a abertura em (tabs)
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [theme, setTheme] = useState<'light' | 'dark'>(colorScheme ?? 'light');
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      <ThemeProvider value={theme === 'dark' ? DarkTheme : DefaultTheme}>
-        {/* headerShown: false esconde a barra de título padrão em todas as telas */}
-        <Stack screenOptions={{ headerShown: false }}>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      {/* headerShown: false esconde a barra de título padrão em todas as telas */}
+      <Stack screenOptions={{ headerShown: false }}>
         
         {/* 1. Tela de Login: Por se chamar 'index', ela abre primeiro */}
         <Stack.Screen name="index" /> 
@@ -33,7 +29,6 @@ export default function RootLayout() {
         
       </Stack>
       <StatusBar style="auto" />
-      </ThemeProvider>
-    </ThemeContext.Provider>
+    </ThemeProvider>
   );
 }
