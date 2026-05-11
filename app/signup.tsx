@@ -1,12 +1,12 @@
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -23,34 +23,67 @@ export default function SignUp() {
   const router = useRouter();
 
   async function handleSignUp() {
-    if (!email || !password || !nome) {
+    // 1. Validação de campos vazios
+    if (!email.trim() || !password.trim() || !nome.trim()) {
       Alert.alert("Atenção", "Preencha todos os campos para criar a conta.");
+      return;
+    }
+
+    // 2. Validação de segurança mínima (Senha)
+    if (password.length < 6) {
+      Alert.alert(
+        "Senha muito curta",
+        "A senha deve ter pelo menos 6 caracteres.",
+      );
       return;
     }
 
     setIsLoading(true);
 
-    // ATUALIZADO: Agora enviamos o nome para o metadata do Supabase
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          nome_usuario: nome, // Guardando o nome real no banco
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: {
+          data: {
+            nome_usuario: nome,
+          },
         },
-      },
-    });
+      });
 
-    setIsLoading(false);
+      // 3. Se o Supabase retornar um erro direto (ex: e-mail inválido)
+      if (error) {
+        Alert.alert("Erro ao cadastrar", error.message);
+        setIsLoading(false);
+        return;
+      }
 
-    if (error) {
-      Alert.alert("Erro ao cadastrar", error.message);
-    } else {
-      Alert.alert(
-        "Verifique seu e-mail! 📩",
-        "Enviamos um link de confirmação para você. Clique nele para ativar sua conta antes de fazer o login!",
-        [{ text: "Entendi", onPress: () => router.back() }],
-      );
+      // 4. LÓGICA DE USUÁRIO JÁ EXISTENTE
+      // O Supabase, por segurança, não dá erro se o e-mail já existir.
+      // Em vez disso, ele retorna o objeto 'user', mas com o array 'identities' VAZIO.
+      if (
+        data.user &&
+        data.user.identities &&
+        data.user.identities.length === 0
+      ) {
+        Alert.alert(
+          "E-mail já cadastrado 🧐",
+          "Já existe uma conta vinculada a este e-mail. Tente fazer o login!",
+          [{ text: "Ir para Login", onPress: () => router.back() }],
+        );
+      } else {
+        // 5. SUCESSO: Usuário novo
+        // O e-mail de confirmação será enviado automaticamente conforme sua config no painel
+        Alert.alert(
+          "Verifique seu e-mail! 📩",
+          "Enviamos um link de confirmação. Clique nele para ativar sua conta antes de entrar no Diário.",
+          [{ text: "Entendi", onPress: () => router.back() }],
+        );
+      }
+    } catch (err) {
+      Alert.alert("Erro", "Ocorreu uma falha na conexão com o servidor.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -136,11 +169,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFCEC",
     borderRadius: 30,
     padding: 28,
+    elevation: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.12,
     shadowRadius: 20,
-    elevation: 10,
   },
   title: {
     fontSize: 32,
@@ -171,10 +204,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#CBD83B",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
     elevation: 5,
   },
   buttonText: { color: "#41386B", fontSize: 16, fontWeight: "700" },
