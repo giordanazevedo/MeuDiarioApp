@@ -1,71 +1,50 @@
-import { Tabs, useRouter } from 'expo-router'; //
-import React, { useState } from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs, useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-// Componente Interno do Menu corrigido com navegação
-function MenuOverlay({ visible, onClose }: { visible: boolean, onClose: () => void }) {
-  const router = useRouter(); //
+// Componente do Menu (Simples e funcional)
+function MenuOverlay({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const router = useRouter();
 
   const irParaTela = (rota: string) => {
-    onClose(); // Fecha o menu primeiro
-    router.push(rota as any); // Navega para a tela desejada
+    onClose();
+    router.push(rota as any);
   };
 
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        {/* Linha Superior */}
         <View style={styles.menuRow}>
-    <TouchableOpacity 
-  style={styles.menuItem} 
-  onPress={() => {
-    onClose(); // Fecha o menu de bolinhas
-    router.push('/selecionar_categoria'); // ENTRA NA TELA DOS CARDS PRIMEIRO
-  }}
->
-  <View style={[styles.circle, { backgroundColor: '#C12683' }]}>
-    <Ionicons name="calendar" size={30} color="black" />
-  </View>
-  <Text style={styles.menuText}>Dia importante novo</Text>
-</TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => irParaTela('/novo_dia_importante')}>
-            <View style={[styles.circle, { backgroundColor: '#C12683' }]}>
-              <Ionicons name="calendar" size={30} color="black" />
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => irParaTela("/selecionar_categoria")}
+          >
+            <View style={[styles.circle, { backgroundColor: "#CBD83B" }]}>
+              <Ionicons name="star" size={30} color="#41386B" />
             </View>
-            <Text style={styles.menuText}>Dia importante novo</Text>
+            <Text style={styles.menuText}>Dia Importante</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => irParaTela("/registro_hoje")}
+          >
+            <View style={[styles.circle, { backgroundColor: "#A88AED" }]}>
+              <Ionicons name="pencil" size={30} color="#fff" />
+            </View>
+            <Text style={styles.menuText}>Registrar Hoje</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Item Central */}
-        <TouchableOpacity style={styles.menuItem} onPress={() => irParaTela('/registro_hoje')}>
-          <View style={[styles.circle, { backgroundColor: '#F39200' }]}>
-            <Ionicons name="time" size={30} color="black" />
-          </View>
-          <Text style={styles.menuText}>Hoje</Text>
-        </TouchableOpacity>
-
-        {/* Linha Inferior */}
-        <View style={styles.menuRow}>
-          <TouchableOpacity style={styles.menuItem} onPress={() => irParaTela('/registro_ontem')}>
-            <View style={[styles.circle, { backgroundColor: '#C12683' }]}>
-              <Ionicons name="arrow-back" size={30} color="black" />
-            </View>
-            <Text style={styles.menuText}>Ontem</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={() => irParaTela('/calendario')}>
-            <View style={[styles.circle, { backgroundColor: '#FFCB05' }]}>
-              <Ionicons name="calendar-outline" size={30} color="black" />
-            </View>
-            <Text style={styles.menuText}>Outro dia</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Botão de Fechar (X) */}
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Ionicons name="close" size={40} color="black" />
+          <Ionicons name="close" size={35} color="#fff" />
         </TouchableOpacity>
       </View>
     </Modal>
@@ -77,107 +56,145 @@ export default function TabLayout() {
 
   return (
     <>
-      <MenuOverlay visible={menuVisible} onClose={() => setMenuVisible(false)} />
-      
+      <MenuOverlay
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+      />
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#000',
-          tabBarInactiveTintColor: '#444',
+          tabBarActiveTintColor: "#FFFCEC", // Creme
+          tabBarInactiveTintColor: "rgba(255, 255, 255, 0.4)",
           tabBarStyle: {
-            backgroundColor: '#E94D89',
-            height: 70,
+            backgroundColor: "#41386B", // Roxo escuro
+            height: 75,
             borderTopWidth: 0,
             paddingBottom: 12,
-            position: 'absolute',
-            overflow: 'visible',
+            display: "flex",
+            flexDirection: "row", // Força a distribuição horizontal
           },
           tabBarLabelStyle: {
-            fontFamily: 'Manrope_700Bold',
+            fontFamily: "Manrope_700Bold",
             fontSize: 10,
-          }
-        }}>
-        
-        <Tabs.Screen name="index" options={{ title: 'Registros', tabBarIcon: ({ color }) => <Ionicons name="reader-outline" size={24} color={color} /> }} />
-        <Tabs.Screen name="estatisticas" options={{ title: 'Estatísticas', tabBarIcon: ({ color }) => <Ionicons name="bar-chart-outline" size={24} color={color} /> }} />
+          },
+        }}
+      >
+        {/* 1. INÍCIO */}
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Início",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="home-outline" size={24} color={color} />
+            ),
+          }}
+        />
 
+        {/* 2. HISTÓRICO */}
+        <Tabs.Screen
+          name="historico"
+          options={{
+            title: "Memorias",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="journal-outline" size={24} color={color} />
+            ),
+          }}
+        />
+
+        {/* 3. BOTÃO CENTRAL (Ajustei o estilo para não empurrar os outros) */}
         <Tabs.Screen
           name="novo"
           options={{
-            title: '',
+            title: "",
             tabBarIcon: () => (
               <View style={styles.floatingButton}>
-                <Ionicons name="add" size={40} color="black" />
+                <Ionicons name="add" size={40} color="#41386B" />
               </View>
             ),
           }}
           listeners={{
             tabPress: (e) => {
-              e.preventDefault(); 
-              setMenuVisible(true); 
+              e.preventDefault();
+              setMenuVisible(true);
             },
           }}
         />
 
-        <Tabs.Screen name="calendario" options={{ title: 'Calendário', tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={24} color={color} /> }} />
-        <Tabs.Screen name="mais" options={{ title: 'Mais', tabBarIcon: ({ color }) => <Ionicons name="ellipsis-horizontal-circle-outline" size={24} color={color} /> }} />
-      </Tabs>
+        {/* 4. CALENDÁRIO (Certifique-se que o nome do arquivo é calendario.tsx) */}
+        <Tabs.Screen
+          name="calendario"
+          options={{
+            title: "Agenda",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="calendar-outline" size={24} color={color} />
+            ),
+          }}
+        />
+
+        {/* 5. CONFIGURAÇÕES (Certifique-se que o nome do arquivo é configuracoes.tsx) */}
+        <Tabs.Screen
+          name="configuracoes"
+          options={{
+            title: "Ajustes",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="settings-outline" size={24} color={color} />
+            ),
+          }}
+        />
+      </Tabs>{" "}
     </>
   );
 }
 
 const styles = StyleSheet.create({
   floatingButton: {
-    width: 65,
-    height: 65,
-    backgroundColor: '#E94D89',
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: 'black',
-    bottom: 15,
-    elevation: 8,
+    width: 60,
+    height: 60,
+    backgroundColor: "#CBD83B", // Verde Limão
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    // Removi o marginTop e o top, o próprio Tabs vai centralizar se for o 3º item
+    marginBottom: 5,
+    elevation: 5,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(65, 56, 107, 0.98)", // Roxo profundo
+    justifyContent: "center",
+    alignItems: "center",
   },
   menuRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginVertical: 20,
+    flexDirection: "row",
+    gap: 30,
+    marginBottom: 40,
   },
   menuItem: {
-    alignItems: 'center',
+    alignItems: "center",
     width: 120,
   },
   circle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
+    width: 75,
+    height: 75,
+    borderRadius: 38,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+    elevation: 4,
   },
   menuText: {
-    color: 'white',
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 12,
-    textAlign: 'center',
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 14,
   },
   closeButton: {
-    marginTop: 50,
-    width: 70,
-    height: 70,
-    backgroundColor: '#E94D89',
-    borderRadius: 35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'black',
+    width: 65,
+    height: 65,
+    backgroundColor: "#A88AED",
+    borderRadius: 33,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
   },
 });
