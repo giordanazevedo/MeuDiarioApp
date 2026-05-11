@@ -7,9 +7,8 @@ import {
   useFonts,
 } from "@expo-google-fonts/manrope";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router"; // useFocusEffect vindo daqui
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -211,8 +210,12 @@ export default function HomeScreen() {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      const nome = user.email?.split("@")[0] || "Usuário";
-      setUserName(nome.charAt(0).toUpperCase() + nome.slice(1));
+      // Puxa o nome do metadata que você alterou na tela de Detalhes
+      const nomeAtualizado =
+        user.user_metadata?.nome_usuario || user.email?.split("@")[0];
+      setUserName(
+        nomeAtualizado.charAt(0).toUpperCase() + nomeAtualizado.slice(1),
+      );
     }
   };
 
@@ -277,6 +280,8 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      // Toda vez que você volta para a Home, ele executa essas funções
+      fetchUserData();
       fetchRegistros();
     }, []),
   );

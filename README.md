@@ -14,7 +14,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 2. Depois de editar:
    git add .
-   git commit -m "Explique o que você mudou"
+   git commit -m "fiz ajustes na manutençao e no tema da tela principal"
    git push origin main
 
    ```
