@@ -1,0 +1,366 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
+import {
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
+import { supabase } from "../src/supabase";
+
+export default function Configuracoes() {
+  const router = useRouter();
+
+  let [fontsLoaded] = useFonts({
+    "Manrope-ExtraBold": Manrope_800ExtraBold,
+  });
+
+  const [tema, setTema] = useState<"claro" | "escuro">("escuro"); // Padrão escuro para combinar com o tema
+  const [lembreteDiario, setLembreteDiario] = useState(false);
+  const [alertaSistema, setAlertaSistema] = useState(true);
+  const [usuarioLogado, setUsuarioLogado] = useState({
+    nome: "",
+    email: "",
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarDadosUsuario();
+    }, []),
+  );
+
+  const carregarDadosUsuario = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const nomeCompleto =
+          user.user_metadata?.nome_usuario || user.email?.split("@")[0];
+        setUsuarioLogado({
+          nome: nomeCompleto.charAt(0).toUpperCase() + nomeCompleto.slice(1),
+          email: user.email || "",
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar usuário:", error);
+    }
+  };
+
+  const alterarSenha = async () => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        usuarioLogado.email,
+        { redirectTo: "http://localhost:8081/redefinir-senha" },
+      );
+      if (error) throw error;
+      Alert.alert("E-mail enviado! 📧", "Verifique sua caixa de entrada.");
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível enviar o e-mail.");
+    }
+  };
+
+  const fazerLogout = async () => {
+    Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // 1. Desloga do Supabase
+            const { error } = await supabase.auth.signOut();
+
+            if (error) throw error;
+
+            // 2. Navegação Direta
+            // Usamos replace para garantir que o usuário não consiga "voltar"
+            // para a tela de configurações usando o botão físico do Android.
+            // O caminho "/" geralmente aponta para o (auth)/index ou app/index
+            router.replace("/");
+          } catch (error) {
+            console.error("Erro ao deslogar:", error);
+            Alert.alert("Erro", "Não foi possível encerrar a sessão.");
+          }
+        },
+      },
+    ]);
+  };
+
+  const isEscuro = tema === "escuro";
+
+  if (!fontsLoaded) return null;
+
+  return (
+    <LinearGradient
+      colors={["#41386B", "#A88AED", "#CBD83B"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ paddingHorizontal: 16 }}
+        >
+          <TouchableOpacity
+            style={styles.botaoVoltar}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Text style={styles.textoVoltar}>Voltar</Text>
+          </TouchableOpacity>
+          <Text style={[styles.mainTitle, isEscuro && styles.textoBranco]}>
+            Configurações
+          </Text>
+
+          {/* 1. PERFIL E CONTA */}
+          <View style={styles.secao}>
+            <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+              1. Perfil e Conta
+            </Text>
+
+            <View style={styles.card}>
+              <View style={styles.perfilRow}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {usuarioLogado.nome ? usuarioLogado.nome.charAt(0) : "U"}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.nome}>
+                    {usuarioLogado.nome}
+                  </Text>
+                  <Text style={styles.email}>
+                    {usuarioLogado.email}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push("/detalhes_usuario")}
+            >
+              <View style={styles.linhaLink}>
+                <Text style={styles.opcaoTexto}>
+                  Informações do Usuário
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color="#fff"
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.card}
+              onPress={alterarSenha}
+            >
+              <View style={styles.linhaLink}>
+                <Text style={styles.opcaoTexto}>
+                  Alterar Senha
+                </Text>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#fff"
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* 2. APARÊNCIA */}
+          <View style={styles.secao}>
+            <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+              2. Aparência
+            </Text>
+            <View style={styles.card}>
+              <Text style={styles.opcaoTexto}>
+                Tema do Aplicativo
+              </Text>
+              <View style={styles.botoesTema}>
+                <TouchableOpacity
+                  style={[styles.botaoTema, !isEscuro && styles.botaoAtivoClaro]}
+                  onPress={() => setTema("claro")}
+                >
+                  <Ionicons
+                    name="sunny"
+                    size={20}
+                    color={!isEscuro ? "#fff" : "#666"}
+                  />
+                  <Text
+                    style={[
+                      styles.textoBotao,
+                      !isEscuro && styles.textoBotaoAtivo,
+                    ]}
+                  >
+                    Claro
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.botaoTema, isEscuro && styles.botaoAtivoEscuro]}
+                  onPress={() => setTema("escuro")}
+                >
+                  <Ionicons
+                    name="moon"
+                    size={20}
+                    color={isEscuro ? "#fff" : "#666"}
+                  />
+                  <Text
+                    style={[
+                      styles.textoBotao,
+                      isEscuro && styles.textoBotaoAtivo,
+                    ]}
+                  >
+                    Escuro
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          {/* 3. PREFERÊNCIAS */}
+          <View style={styles.secao}>
+            <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+              3. Preferências
+            </Text>
+            <View style={styles.card}>
+              <View style={styles.linhaSwitch}>
+                <Text style={styles.opcaoTexto}>
+                  Lembrete Diário
+                </Text>
+                <Switch
+                  value={lembreteDiario}
+                  onValueChange={setLembreteDiario}
+                  trackColor={{ false: "#767577", true: "#A88AED" }}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* 4. SAIR */}
+          <View style={styles.secao}>
+            <TouchableOpacity
+              style={styles.botaoSairContainer}
+              onPress={fazerLogout}
+            >
+              <Ionicons name="log-out-outline" size={22} color="#FF3B30" />
+              <Text style={styles.textoSair}>Sair da Conta</Text>
+            </TouchableOpacity>
+            <Text style={styles.versao}>Versão 1.2.0 • Diário Emocional</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  containerEscuro: {}, // Deixado vazio pois o fundo agora é o gradiente
+  botaoVoltar: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 10,
+    gap: 8,
+  },
+  textoVoltar: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Manrope-ExtraBold",
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontFamily: "Manrope-ExtraBold",
+    color: "#fff", // Fixo em branco para dar contraste com o gradiente
+    marginBottom: 20,
+  },
+  secao: { marginBottom: 25 },
+  tituloSecao: {
+    fontSize: 14,
+    fontFamily: "Manrope-ExtraBold",
+    color: "#fff", // Fixo em branco para dar contraste com o gradiente
+    textTransform: "uppercase",
+    marginBottom: 10,
+    letterSpacing: 1,
+  },
+  card: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 10,
+    elevation: 0,
+  },
+  cardEscuro: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  perfilRow: { flexDirection: "row", alignItems: "center" },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#A88AED",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 15,
+  },
+  avatarText: { color: "#fff", fontSize: 20, fontFamily: "Manrope-ExtraBold" },
+  nome: { fontSize: 18, fontFamily: "Manrope-ExtraBold", color: "#fff" },
+  email: { fontSize: 14, color: "rgba(255, 255, 255, 0.8)" },
+  opcaoTexto: { fontSize: 16, fontFamily: "Manrope-ExtraBold", color: "#fff" },
+  textoBranco: { color: "#FFFFFF" },
+  textoCinza: { color: "#8E8AA7" },
+  linhaLink: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  botoesTema: { flexDirection: "row", gap: 10, marginTop: 15 },
+  botaoTema: {
+    flex: 1,
+    flexDirection: "row",
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#F0F0F5",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  botaoAtivoClaro: { backgroundColor: "#A88AED" },
+  botaoAtivoEscuro: { backgroundColor: "#41386B" },
+  textoBotao: { fontFamily: "Manrope-ExtraBold", color: "#666" },
+  textoBotaoAtivo: { color: "#fff" },
+  linhaSwitch: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  botaoSairContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 15,
+    gap: 10,
+  },
+  textoSair: { color: "#FF3B30", fontSize: 16, fontFamily: "Manrope-ExtraBold" },
+  versao: {
+    textAlign: "center",
+    color: "#fff", // Mudado para branco para contraste com o gradiente
+    fontSize: 12,
+    marginTop: 10,
+    fontFamily: "Manrope-ExtraBold",
+  },
+});

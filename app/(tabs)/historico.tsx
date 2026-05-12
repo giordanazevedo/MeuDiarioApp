@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "../../src/supabase";
 
 interface Registro {
@@ -117,11 +118,14 @@ export default function HistoricoScreen() {
 
   if (!fontsLoaded || loading) {
     return (
-      <ActivityIndicator
-        size="large"
-        color="#bc8ddf"
-        style={{ flex: 1, backgroundColor: "#000", justifyContent: "center" }}
-      />
+      <LinearGradient
+        colors={["#41386B", "#A88AED", "#CBD83B"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ flex: 1, justifyContent: "center" }}
+      >
+        <ActivityIndicator size="large" color="#fff" />
+      </LinearGradient>
     );
   }
 
@@ -183,7 +187,12 @@ export default function HistoricoScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={["#41386B", "#A88AED", "#CBD83B"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <Text style={styles.headerTitle}>Seu Histórico</Text>
 
       <FlatList
@@ -204,12 +213,12 @@ export default function HistoricoScreen() {
           </Text>
         }
       />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000", paddingHorizontal: 20 },
+  container: { flex: 1, paddingHorizontal: 20 },
   headerTitle: {
     fontSize: 22,
     color: "#fff",
@@ -220,7 +229,7 @@ const styles = StyleSheet.create({
   },
   listContent: { paddingBottom: 100 },
   card: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 20,
     padding: 20,
     marginBottom: 15,
@@ -231,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: "center", // Garante que a data e a lixeira fiquem alinhadas
   },
-  dateText: { color: "#666", fontSize: 12, fontFamily: "Manrope-ExtraBold" },
+  dateText: { color: "rgba(255, 255, 255, 0.8)", fontSize: 12, fontFamily: "Manrope-ExtraBold" },
   contentRow: { flexDirection: "row", alignItems: "center" },
   emojiCircle: {
     width: 50,
@@ -242,17 +251,17 @@ const styles = StyleSheet.create({
   },
   textContainer: { marginLeft: 15, flex: 1 },
   moodTitle: { fontSize: 18, fontFamily: "Manrope-ExtraBold" },
-  timeText: { color: "#666", fontSize: 14, fontWeight: "normal" },
+  timeText: { color: "rgba(255, 255, 255, 0.6)", fontSize: 14, fontFamily: "Manrope-ExtraBold" },
   tagsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: 5 },
   tag: {
-    color: "#ccc",
+    color: "#fff",
     fontSize: 12,
     marginRight: 10,
     fontFamily: "Manrope-ExtraBold",
   },
-  noteText: { color: "#888", marginTop: 10, fontStyle: "italic" },
+  noteText: { color: "rgba(255, 255, 255, 0.9)", marginTop: 10, fontFamily: "Manrope-ExtraBold", fontStyle: "italic" },
   emptyText: {
-    color: "#666",
+    color: "#fff",
     textAlign: "center",
     marginTop: 50,
     fontFamily: "Manrope-ExtraBold",

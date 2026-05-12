@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,10 +11,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
 import { supabase } from "../src/supabase";
 
 export default function DetalhesUsuario() {
   const router = useRouter();
+
+  let [fontsLoaded] = useFonts({
+    "Manrope-ExtraBold": Manrope_800ExtraBold,
+  });
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -104,151 +111,163 @@ export default function DetalhesUsuario() {
     }
   };
 
-  if (carregando) {
+  if (carregando || !fontsLoaded) {
     return (
-      <View style={styles.centralizar}>
-        <ActivityIndicator size="large" color="#A88AED" />
+      <LinearGradient
+        colors={["#41386B", "#A88AED", "#CBD83B"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.centralizar}
+      >
+        <ActivityIndicator size="large" color="#fff" />
         <Text style={styles.textoCarregando}>Carregando perfil...</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.botaoVoltar}
-        >
-          <Text style={styles.textoVoltar}>← Voltar</Text>
-        </TouchableOpacity>
-        <Text style={styles.titulo}>Meu Perfil</Text>
-      </View>
-
-      <View style={styles.formulario}>
-        <View style={styles.campo}>
-          <Text style={styles.label}>Nome</Text>
-          <TextInput
-            style={[styles.input, !editando && styles.inputDesabilitado]}
-            value={nome}
-            onChangeText={setNome}
-            editable={editando}
-          />
-        </View>
-
-        <View style={styles.campo}>
-          <Text style={styles.label}>E-mail (Não alterável)</Text>
-          <TextInput
-            style={[styles.input, styles.inputDesabilitado]}
-            value={email}
-            editable={false}
-          />
-        </View>
-
-        <View style={styles.campo}>
-          <Text style={styles.label}>Telefone</Text>
-          <TextInput
-            style={[styles.input, !editando && styles.inputDesabilitado]}
-            value={telefone}
-            onChangeText={setTelefone}
-            editable={editando}
-            keyboardType="phone-pad"
-            placeholder="(00) 00000-0000"
-          />
-        </View>
-      </View>
-
-      <View style={styles.botoesContainer}>
-        {!editando ? (
-          <TouchableOpacity
-            style={styles.botaoEditar}
-            onPress={() => setEditando(true)}
-          >
-            <Text style={styles.textoBotaoEditar}>✏️ Editar Perfil</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.botoesEdicao}>
+    <LinearGradient
+      colors={["#41386B", "#A88AED", "#CBD83B"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
             <TouchableOpacity
-              style={[styles.botao, styles.botaoCancelar]}
-              onPress={() => setEditando(false)}
+              onPress={() => router.back()}
+              style={styles.botaoVoltar}
             >
-              <Text style={styles.textoBotaoCancelar}>Cancelar</Text>
+              <Text style={styles.textoVoltar}>← Voltar</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.botao, styles.botaoSalvar]}
-              onPress={salvarAlteracoes}
-            >
-              {salvando ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.textoBotaoSalvar}>Salvar</Text>
-              )}
-            </TouchableOpacity>
+            <Text style={styles.titulo}>Meu Perfil</Text>
           </View>
-        )}
-      </View>
 
-      <View style={styles.estatisticas}>
-        <View style={styles.cardEstatistica}>
-          <Text style={styles.numeroEstatistica}>{totalEntradas}</Text>
-          <Text style={styles.labelEstatistica}>Registros no Diário</Text>
-        </View>
-      </View>
-    </ScrollView>
+          <View style={styles.formulario}>
+            <View style={styles.campo}>
+              <Text style={styles.label}>Nome</Text>
+              <TextInput
+                style={[styles.input, !editando && styles.inputDesabilitado]}
+                value={nome}
+                onChangeText={setNome}
+                editable={editando}
+              />
+            </View>
+
+            <View style={styles.campo}>
+              <Text style={styles.label}>E-mail (Não alterável)</Text>
+              <TextInput
+                style={[styles.input, styles.inputDesabilitado]}
+                value={email}
+                editable={false}
+              />
+            </View>
+
+            <View style={styles.campo}>
+              <Text style={styles.label}>Telefone</Text>
+              <TextInput
+                style={[styles.input, !editando && styles.inputDesabilitado]}
+                value={telefone}
+                onChangeText={setTelefone}
+                editable={editando}
+                keyboardType="phone-pad"
+                placeholder="(00) 00000-0000"
+              />
+            </View>
+          </View>
+
+          <View style={styles.botoesContainer}>
+            {!editando ? (
+              <TouchableOpacity
+                style={styles.botaoEditar}
+                onPress={() => setEditando(true)}
+              >
+                <Text style={styles.textoBotaoEditar}>✏️ Editar Perfil</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.botoesEdicao}>
+                <TouchableOpacity
+                  style={[styles.botao, styles.botaoCancelar]}
+                  onPress={() => setEditando(false)}
+                >
+                  <Text style={styles.textoBotaoCancelar}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.botao, styles.botaoSalvar]}
+                  onPress={salvarAlteracoes}
+                >
+                  {salvando ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.textoBotaoSalvar}>Salvar</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.estatisticas}>
+            <View style={styles.cardEstatistica}>
+              <Text style={styles.numeroEstatistica}>{totalEntradas}</Text>
+              <Text style={styles.labelEstatistica}>Registros no Diário</Text>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FB" },
+  container: { flex: 1 },
   centralizar: { flex: 1, justifyContent: "center", alignItems: "center" },
-  textoCarregando: { marginTop: 10, color: "#666" },
+  textoCarregando: { marginTop: 10, color: "#fff", fontFamily: "Manrope-ExtraBold" },
   header: {
-    backgroundColor: "#A88AED",
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
   botaoVoltar: { marginBottom: 10 },
-  textoVoltar: { color: "#fff", fontWeight: "bold" },
-  titulo: { fontSize: 24, fontWeight: "bold", color: "#fff" },
+  textoVoltar: { color: "#fff", fontFamily: "Manrope-ExtraBold" },
+  titulo: { fontSize: 24, color: "#fff", fontFamily: "Manrope-ExtraBold" },
   formulario: { padding: 20 },
   campo: { marginBottom: 20 },
-  label: { fontSize: 14, color: "#8E8AA7", marginBottom: 5, fontWeight: "600" },
+  label: { fontSize: 14, color: "#fff", marginBottom: 5, fontFamily: "Manrope-ExtraBold" },
   input: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 15,
     padding: 15,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#E4E1F2",
-    color: "#41386B",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    color: "#fff",
+    fontFamily: "Manrope-ExtraBold",
   },
-  inputDesabilitado: { backgroundColor: "#F1F0F5", color: "#8E8AA7" },
+  inputDesabilitado: { backgroundColor: "rgba(255, 255, 255, 0.1)", color: "rgba(255, 255, 255, 0.7)", fontFamily: "Manrope-ExtraBold" },
   botoesContainer: { paddingHorizontal: 20 },
   botaoEditar: {
-    backgroundColor: "#A88AED",
+    backgroundColor: "#5b20e6ff",
     borderRadius: 15,
     padding: 18,
     alignItems: "center",
   },
-  textoBotaoEditar: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  textoBotaoEditar: { color: "#fff", fontSize: 16, fontFamily: "Manrope-ExtraBold" },
   botoesEdicao: { flexDirection: "row", gap: 10 },
   botao: { flex: 1, borderRadius: 15, padding: 18, alignItems: "center" },
-  botaoCancelar: { backgroundColor: "#E4E1F2" },
+  botaoCancelar: { backgroundColor: "rgba(255, 255, 255, 0.2)" },
   botaoSalvar: { backgroundColor: "#A88AED" },
-  textoBotaoCancelar: { color: "#41386B", fontWeight: "600" },
-  textoBotaoSalvar: { color: "#fff", fontWeight: "bold" },
+  textoBotaoCancelar: { color: "#fff", fontFamily: "Manrope-ExtraBold" },
+  textoBotaoSalvar: { color: "#fff", fontFamily: "Manrope-ExtraBold" },
   estatisticas: { padding: 20 },
   cardEstatistica: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 20,
     padding: 20,
     alignItems: "center",
-    elevation: 2,
+    elevation: 0,
   },
-  numeroEstatistica: { fontSize: 32, fontWeight: "bold", color: "#A88AED" },
-  labelEstatistica: { color: "#8E8AA7", marginTop: 5 },
+  numeroEstatistica: { fontSize: 32, color: "#fff", fontFamily: "Manrope-ExtraBold" },
+  labelEstatistica: { color: "rgba(255, 255, 255, 0.9)", marginTop: 5, fontFamily: "Manrope-ExtraBold" },
 });
