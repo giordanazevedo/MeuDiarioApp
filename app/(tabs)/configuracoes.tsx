@@ -11,12 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { supabase } from "../../src/supabase";
+import { supabase } from "../src/supabase";
 
 export default function Configuracoes() {
   const router = useRouter();
 
-  const [tema, setTema] = useState<"claro" | "escuro">("claro");
+  const [tema, setTema] = useState<"claro" | "escuro">("escuro"); // Padrão escuro para combinar com o tema
   const [lembreteDiario, setLembreteDiario] = useState(false);
   const [alertaSistema, setAlertaSistema] = useState(true);
   const [usuarioLogado, setUsuarioLogado] = useState({
@@ -24,7 +24,6 @@ export default function Configuracoes() {
     email: "",
   });
 
-  // Atualiza os dados sempre que a tela ganha foco
   useFocusEffect(
     useCallback(() => {
       carregarDadosUsuario();
@@ -49,25 +48,16 @@ export default function Configuracoes() {
     }
   };
 
-  // FUNÇÃO PARA ALTERAR SENHA VIA E-MAIL
   const alterarSenha = async () => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(
         usuarioLogado.email,
-        {
-          redirectTo: "http://localhost:8081/redefinir-senha",
-        },
+        { redirectTo: "http://localhost:8081/redefinir-senha" },
       );
-
       if (error) throw error;
-
-      Alert.alert(
-        "E-mail enviado! 📧",
-        "Enviamos um link de redefinição para o seu e-mail. Por favor, verifique sua caixa de entrada.",
-      );
+      Alert.alert("E-mail enviado! 📧", "Verifique sua caixa de entrada.");
     } catch (error) {
-      console.error("Erro ao solicitar senha:", error);
-      Alert.alert("Erro", "Não foi possível enviar o e-mail de redefinição.");
+      Alert.alert("Erro", "Não foi possível enviar o e-mail.");
     }
   };
 
@@ -78,23 +68,32 @@ export default function Configuracoes() {
         text: "Sair",
         style: "destructive",
         onPress: async () => {
-          await supabase.auth.signOut();
-          router.replace("/");
+          try {
+            // 1. Desloga do Supabase
+            const { error } = await supabase.auth.signOut();
+
+            if (error) throw error;
+
+            // 2. Navegação Direta
+            // Usamos replace para garantir que o usuário não consiga "voltar"
+            // para a tela de configurações usando o botão físico do Android.
+            // O caminho "/" geralmente aponta para o (auth)/index ou app/index
+            router.replace("/");
+          } catch (error) {
+            console.error("Erro ao deslogar:", error);
+            Alert.alert("Erro", "Não foi possível encerrar a sessão.");
+          }
         },
       },
     ]);
   };
 
   const isEscuro = tema === "escuro";
-  const dynamicStyles = {
-    container: [styles.container, isEscuro && styles.containerEscuro],
-    text: [styles.opcaoTexto, isEscuro && styles.textoBranco],
-    card: [styles.card, isEscuro && styles.cardEscuro],
-    titulo: [styles.tituloSecao, isEscuro && styles.textoBranco],
-  };
 
   return (
-    <SafeAreaView style={dynamicStyles.container}>
+    <SafeAreaView
+      style={[styles.container, isEscuro && styles.containerEscuro]}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={{ paddingHorizontal: 16 }}
@@ -105,9 +104,11 @@ export default function Configuracoes() {
 
         {/* 1. PERFIL E CONTA */}
         <View style={styles.secao}>
-          <Text style={dynamicStyles.titulo}>1. Perfil e Conta</Text>
+          <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+            1. Perfil e Conta
+          </Text>
 
-          <View style={dynamicStyles.card}>
+          <View style={[styles.card, isEscuro && styles.cardEscuro]}>
             <View style={styles.perfilRow}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
@@ -126,11 +127,13 @@ export default function Configuracoes() {
           </View>
 
           <TouchableOpacity
-            style={dynamicStyles.card}
+            style={[styles.card, isEscuro && styles.cardEscuro]}
             onPress={() => router.push("/detalhes_usuario")}
           >
             <View style={styles.linhaLink}>
-              <Text style={dynamicStyles.text}>Informações do Usuário</Text>
+              <Text style={[styles.opcaoTexto, isEscuro && styles.textoBranco]}>
+                Informações do Usuário
+              </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -140,11 +143,13 @@ export default function Configuracoes() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={dynamicStyles.card}
-            onPress={alterarSenha} // AGORA CHAMA A FUNÇÃO REAL
+            style={[styles.card, isEscuro && styles.cardEscuro]}
+            onPress={alterarSenha}
           >
             <View style={styles.linhaLink}>
-              <Text style={dynamicStyles.text}>Alterar Senha</Text>
+              <Text style={[styles.opcaoTexto, isEscuro && styles.textoBranco]}>
+                Alterar Senha
+              </Text>
               <Ionicons
                 name="lock-closed-outline"
                 size={20}
@@ -156,9 +161,13 @@ export default function Configuracoes() {
 
         {/* 2. APARÊNCIA */}
         <View style={styles.secao}>
-          <Text style={dynamicStyles.titulo}>2. Aparência</Text>
-          <View style={dynamicStyles.card}>
-            <Text style={dynamicStyles.text}>Tema do Aplicativo</Text>
+          <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+            2. Aparência
+          </Text>
+          <View style={[styles.card, isEscuro && styles.cardEscuro]}>
+            <Text style={[styles.opcaoTexto, isEscuro && styles.textoBranco]}>
+              Tema do Aplicativo
+            </Text>
             <View style={styles.botoesTema}>
               <TouchableOpacity
                 style={[styles.botaoTema, !isEscuro && styles.botaoAtivoClaro]}
@@ -201,26 +210,19 @@ export default function Configuracoes() {
           </View>
         </View>
 
-        {/* 3. NOTIFICAÇÕES */}
+        {/* 3. PREFERÊNCIAS */}
         <View style={styles.secao}>
-          <Text style={dynamicStyles.titulo}>3. Preferências</Text>
-          <View style={dynamicStyles.card}>
+          <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+            3. Preferências
+          </Text>
+          <View style={[styles.card, isEscuro && styles.cardEscuro]}>
             <View style={styles.linhaSwitch}>
-              <Text style={dynamicStyles.text}>Lembrete Diário</Text>
+              <Text style={[styles.opcaoTexto, isEscuro && styles.textoBranco]}>
+                Lembrete Diário
+              </Text>
               <Switch
                 value={lembreteDiario}
                 onValueChange={setLembreteDiario}
-                trackColor={{ false: "#767577", true: "#A88AED" }}
-              />
-            </View>
-          </View>
-
-          <View style={dynamicStyles.card}>
-            <View style={styles.linhaSwitch}>
-              <Text style={dynamicStyles.text}>Notificações de Sistema</Text>
-              <Switch
-                value={alertaSistema}
-                onValueChange={setAlertaSistema}
                 trackColor={{ false: "#767577", true: "#A88AED" }}
               />
             </View>
@@ -238,8 +240,6 @@ export default function Configuracoes() {
           </TouchableOpacity>
           <Text style={styles.versao}>Versão 1.2.0 • Diário Emocional</Text>
         </View>
-
-        <View style={{ height: 50 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -247,7 +247,7 @@ export default function Configuracoes() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FB" },
-  containerEscuro: { backgroundColor: "#121212" },
+  containerEscuro: { backgroundColor: "#1A162D" }, // Roxo bem profundo para o fundo
   mainTitle: {
     fontSize: 28,
     fontWeight: "800",
@@ -270,11 +270,12 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
   },
-  cardEscuro: { backgroundColor: "#1E1E1E" },
+  cardEscuro: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
   perfilRow: { flexDirection: "row", alignItems: "center" },
   avatar: {
     width: 50,
