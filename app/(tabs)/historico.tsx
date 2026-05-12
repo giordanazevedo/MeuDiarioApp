@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   listContent: { paddingBottom: 100 },
   card: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
     marginBottom: 15,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: "center", // Garante que a data e a lixeira fiquem alinhadas
   },
-  dateText: { color: "rgba(255, 255, 255, 0.8)", fontSize: 12, fontFamily: "Manrope-ExtraBold" },
+  dateText: { color: "#888", fontSize: 12, fontFamily: "Manrope-ExtraBold" },
   contentRow: { flexDirection: "row", alignItems: "center" },
   emojiCircle: {
     width: 50,
@@ -251,15 +251,15 @@ const styles = StyleSheet.create({
   },
   textContainer: { marginLeft: 15, flex: 1 },
   moodTitle: { fontSize: 18, fontFamily: "Manrope-ExtraBold" },
-  timeText: { color: "rgba(255, 255, 255, 0.6)", fontSize: 14, fontFamily: "Manrope-ExtraBold" },
+  timeText: { color: "#AAA", fontSize: 14, fontFamily: "Manrope-ExtraBold" },
   tagsRow: { flexDirection: "row", flexWrap: "wrap", marginTop: 5 },
   tag: {
-    color: "#fff",
+    color: "#41386B",
     fontSize: 12,
     marginRight: 10,
     fontFamily: "Manrope-ExtraBold",
   },
-  noteText: { color: "rgba(255, 255, 255, 0.9)", marginTop: 10, fontFamily: "Manrope-ExtraBold", fontStyle: "italic" },
+  noteText: { color: "#555", marginTop: 10, fontFamily: "Manrope-ExtraBold", fontStyle: "italic" },
   emptyText: {
     color: "#fff",
     textAlign: "center",

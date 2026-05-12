@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -13,7 +14,20 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { supabase } from "../src/supabase";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function Configuracoes() {
   const router = useRouter();
@@ -24,6 +38,8 @@ export default function Configuracoes() {
 
   const [tema, setTema] = useState<"claro" | "escuro">("escuro"); // Padrão escuro para combinar com o tema
   const [lembreteDiario, setLembreteDiario] = useState(false);
+  const [horarioLembrete, setHorarioLembrete] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
   const [alertaSistema, setAlertaSistema] = useState(true);
   const [usuarioLogado, setUsuarioLogado] = useState({
     nome: "",
@@ -33,8 +49,85 @@ export default function Configuracoes() {
   useFocusEffect(
     useCallback(() => {
       carregarDadosUsuario();
+      carregarPreferenciaNotificacao();
     }, []),
   );
+
+  const carregarPreferenciaNotificacao = async () => {
+    try {
+      const ativado = await AsyncStorage.getItem("@lembrete_ativo");
+      const horario = await AsyncStorage.getItem("@lembrete_horario");
+      
+      if (ativado === "true") {
+        setLembreteDiario(true);
+      }
+      
+      if (horario) {
+        setHorarioLembrete(new Date(horario));
+      } else {
+        const defaultTime = new Date();
+        defaultTime.setHours(20, 0, 0, 0); // Padrão às 20h
+        setHorarioLembrete(defaultTime);
+      }
+    } catch (e) {
+      console.log("Erro ao carregar preferências:", e);
+    }
+  };
+
+  const agendarNotificacao = async (data: Date) => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== "granted") {
+      const { status: newStatus } = await Notifications.requestPermissionsAsync();
+      if (newStatus !== "granted") {
+        Alert.alert(
+          "Permissão Negada", 
+          "Habilite as notificações nas configurações do celular para receber lembretes."
+        );
+        setLembreteDiario(false);
+        await AsyncStorage.setItem("@lembrete_ativo", "false");
+        return;
+      }
+    }
+
+    await Notifications.cancelAllScheduledNotificationsAsync();
+    
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Como foi o seu dia hoje? 🌟",
+        body: "Tire 2 minutinhos para registrar suas emoções e atividades no diário!",
+        sound: true,
+      },
+      trigger: {
+        hour: data.getHours(),
+        minute: data.getMinutes(),
+        repeats: true,
+      } as any,
+    });
+  };
+
+  const handleToggleLembrete = async (valor: boolean) => {
+    setLembreteDiario(valor);
+    await AsyncStorage.setItem("@lembrete_ativo", valor ? "true" : "false");
+    
+    if (valor) {
+      await agendarNotificacao(horarioLembrete);
+    } else {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    }
+  };
+
+  const onChangeTime = async (event: any, selectedDate?: Date) => {
+    if (Platform.OS === "android") {
+      setShowPicker(false);
+    }
+    if (selectedDate) {
+      setHorarioLembrete(selectedDate);
+      await AsyncStorage.setItem("@lembrete_horario", selectedDate.toISOString());
+      if (lembreteDiario) {
+        await agendarNotificacao(selectedDate);
+      }
+    }
+  };
 
   const carregarDadosUsuario = async () => {
     try {
@@ -241,10 +334,44 @@ export default function Configuracoes() {
                 </Text>
                 <Switch
                   value={lembreteDiario}
-                  onValueChange={setLembreteDiario}
+                  onValueChange={handleToggleLembrete}
                   trackColor={{ false: "#767577", true: "#A88AED" }}
                 />
               </View>
+
+              {lembreteDiario && (
+                <View style={styles.linhaHorario}>
+                  <Text style={styles.opcaoTexto}>Horário do Lembrete</Text>
+                  
+                  {Platform.OS === 'ios' ? (
+                     <DateTimePicker
+                        value={horarioLembrete}
+                        mode="time"
+                        display="default"
+                        themeVariant={isEscuro ? "dark" : "light"}
+                        onChange={onChangeTime}
+                        style={{ width: 100 }}
+                     />
+                  ) : (
+                     <>
+                        <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.timeBtn}>
+                           <Text style={styles.timeText}>
+                             {horarioLembrete.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                           </Text>
+                        </TouchableOpacity>
+                        {showPicker && (
+                           <DateTimePicker
+                              value={horarioLembrete}
+                              mode="time"
+                              is24Hour={true}
+                              display="default"
+                              onChange={onChangeTime}
+                           />
+                        )}
+                     </>
+                  )}
+                </View>
+              )}
             </View>
           </View>
 
@@ -347,13 +474,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingVertical: 8,
+  },
+  linhaHorario: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)",
+    marginTop: 10,
+  },
+  timeBtn: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  timeText: {
+    color: "#CBD83B",
+    fontSize: 16,
+    fontFamily: "Manrope-ExtraBold",
   },
   botaoSairContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 15,
+    backgroundColor: "rgba(255, 59, 48, 0.15)",
+    paddingVertical: 16,
+    borderRadius: 20,
     gap: 10,
+    marginTop: 10,
   },
   textoSair: { color: "#FF3B30", fontSize: 16, fontFamily: "Manrope-ExtraBold" },
   versao: {

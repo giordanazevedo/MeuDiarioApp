@@ -3,12 +3,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  Manrope_400Regular,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+  useFonts,
+} from "@expo-google-fonts/manrope";
+import {
   Alert,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -19,13 +26,24 @@ export default function NovoDiaImportante() {
   const router = useRouter();
   const { categoria, icon } = useLocalSearchParams();
   const [data, setData] = useState(new Date());
+  const [titulo, setTitulo] = useState("");
   const [show, setShow] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  let [fontsLoaded] = useFonts({
+    "Manrope-ExtraBold": Manrope_800ExtraBold,
+    "Manrope-Bold": Manrope_700Bold,
+    "Manrope-Regular": Manrope_400Regular,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   const onChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || data;
-    setShow(Platform.OS === "ios");
-    setData(currentDate);
+    if (selectedDate) {
+      setData(selectedDate);
+    }
   };
 
   const handleSalvar = async () => {
@@ -42,10 +60,18 @@ export default function NovoDiaImportante() {
         return;
       }
 
+      if (!titulo.trim()) {
+        Alert.alert("Ops!", "Por favor, dê um nome para o seu evento.");
+        setSalvando(false);
+        return;
+      }
+
+      const catString = String(categoria || "");
+
       const { error } = await supabase.from("dias_importantes").insert([
         {
-          titulo: categoria,
-          categoria: categoria,
+          titulo: titulo.trim(),
+          categoria: catString,
           data_evento: data.toISOString(),
           user_id: user.id,
         },
@@ -96,6 +122,19 @@ export default function NovoDiaImportante() {
             />
           </View>
           <Text style={styles.categoriaTitle}>{categoria}</Text>
+          
+          <View style={styles.inputField}>
+            <Text style={styles.inputText}>Nome do Evento</Text>
+            <TextInput
+              style={styles.textInputStyle}
+              placeholder="Ex: Meu Aniversário"
+              placeholderTextColor="rgba(255,255,255,0.4)"
+              value={titulo}
+              onChangeText={setTitulo}
+              maxLength={40}
+            />
+          </View>
+
           <Text style={styles.instructions}>Escolha a data do evento</Text>
 
           {/* Campo de data */}
@@ -170,7 +209,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: "Manrope_700Bold",
+    fontFamily: "Manrope-ExtraBold",
   },
   iconCircle: {
     width: 100,
@@ -184,7 +223,7 @@ const styles = StyleSheet.create({
   categoriaTitle: {
     color: "#fff",
     fontSize: 24,
-    fontFamily: "Manrope_700Bold",
+    fontFamily: "Manrope-ExtraBold",
     marginBottom: 8,
   },
   instructions: {
@@ -205,11 +244,20 @@ const styles = StyleSheet.create({
   inputText: {
     color: "rgba(255,255,255,0.6)",
     fontSize: 13,
+    fontFamily: "Manrope-Regular",
+  },
+  textInputStyle: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Manrope-Bold",
+    width: "100%",
+    textAlign: "center",
+    paddingVertical: 5,
   },
   dateDisplay: {
     color: "#CBD83B",
     fontSize: 18,
-    fontFamily: "Manrope_700Bold",
+    fontFamily: "Manrope-ExtraBold",
     textAlign: "center",
   },
   pickerContainer: {
@@ -220,7 +268,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   saveDateBtn: { padding: 10, alignItems: "flex-end" },
-  saveDateText: { color: "#CBD83B", fontFamily: "Manrope_700Bold" },
+  saveDateText: { color: "#CBD83B", fontFamily: "Manrope-ExtraBold" },
   saveButton: {
     backgroundColor: "#CBD83B",
     padding: 18,
@@ -240,6 +288,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#41386B",
     fontSize: 16,
-    fontFamily: "Manrope_700Bold",
+    fontFamily: "Manrope-ExtraBold",
   },
 });

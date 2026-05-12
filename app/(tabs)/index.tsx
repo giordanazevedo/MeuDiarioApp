@@ -20,12 +20,10 @@ import {
   Animated,
   Dimensions,
   Image,
-  Modal,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   RefreshControl,
@@ -55,25 +53,6 @@ const dicasBemEstar = [
   { titulo: "Hidrate-se", descricao: "Beba pelo menos 2L de água hoje.", icone: "water-outline", cor: "#4ECDC4" },
 ];
 
-const emotionsList = [
-  { id: "1", label: "Feliz", icon: "smile-beam" },
-  { id: "2", label: "Empolgado(a)", icon: "grin-stars" },
-  { id: "3", label: "Grato(a)", icon: "hand-holding-heart" },
-  { id: "4", label: "Ansioso(a)", icon: "meh" },
-];
-
-const sleepList = [
-  { id: "s1", label: "Bom Sono", icon: "bed" },
-  { id: "s2", label: "Sono Neutro", icon: "bed" },
-  { id: "s3", label: "Sono Ruim", icon: "procedures" },
-];
-
-const healthList = [
-  { id: "h1", label: "Atividade Física", icon: "walking" },
-  { id: "h2", label: "Alimentação Saudável", icon: "apple-alt" },
-  { id: "h3", label: "Beber Água", icon: "tint" },
-];
-
 interface Registro {
   id: string;
   data_criacao: string;
@@ -84,13 +63,6 @@ interface Registro {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [selectedMainMood, setSelectedMainMood] = useState<any>(null);
-  const [selectedEmotion, setSelectedEmotion] = useState("");
-  const [selectedSleep, setSelectedSleep] = useState("");
-  const [selectedHealth, setSelectedHealth] = useState("");
-  const [note, setNote] = useState("");
   const [userName, setUserName] = useState("");
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,40 +136,6 @@ export default function HomeScreen() {
 
   useFocusEffect(useCallback(() => { fetchUserData(); fetchRegistros(); }, []));
 
-  const handleFinalSave = async () => {
-    if (isSaving) return;
-    setIsSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setIsSaving(false); return; }
-
-    const { error } = await supabase.from("registros").insert([{
-      humor: selectedMainMood.value,
-      user_id: user.id,
-      atividades: selectedEmotion,
-      nivel_sono: selectedSleep,
-      nivel_saude: selectedHealth,
-      anotacao: note,
-      data_criacao: new Date().toISOString(),
-    }]);
-
-    if (!error) {
-      setModalVisible(false);
-      Alert.alert("Sucesso ✨", "Seu dia foi guardado!");
-      setSelectedEmotion(""); setSelectedSleep(""); setSelectedHealth(""); setNote("");
-      fetchRegistros();
-    }
-    setIsSaving(false);
-  };
-
-  const SelectableItem = ({ item, selected, onSelect }: any) => (
-    <TouchableOpacity onPress={() => onSelect(item.label)} style={styles.iconItem}>
-      <View style={[styles.iconCircle, selected === item.label && styles.iconCircleActive]}>
-        <FontAwesome5 name={item.icon} size={22} color={selected === item.label ? "#fff" : "#A88AED"} />
-      </View>
-      <Text style={[styles.iconLabel, selected === item.label && styles.labelActive]}>{item.label}</Text>
-    </TouchableOpacity>
-  );
-
   if (!fontsLoaded || loading) {
     return (
       <LinearGradient colors={["#41386B", "#A88AED", "#CBD83B"]} style={styles.loadingContainer}>
@@ -240,7 +178,7 @@ export default function HomeScreen() {
             <Text style={styles.moodSectionTitle}>Como você está hoje?</Text>
             <View style={styles.moodRow}>
               {mainMoods.map((mood) => (
-                <TouchableOpacity key={mood.value} onPress={() => { setSelectedMainMood(mood); setModalVisible(true); }} style={styles.moodItem}>
+                <TouchableOpacity key={mood.value} onPress={() => router.push({ pathname: "/registro_hoje", params: { mood: mood.value } })} style={styles.moodItem}>
                   <View style={[styles.emojiCircle, { backgroundColor: mood.color }]}>
                     <Image source={mood.emoji} style={styles.emojiImage} resizeMode="contain" />
                   </View>
@@ -276,26 +214,6 @@ export default function HomeScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       </SafeAreaView>
-
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <LinearGradient colors={["#41386B", "#A88AED"]} style={styles.darkContainer}>
-          <SafeAreaView style={{ flex: 1, padding: 20 }}>
-            <View style={styles.darkHeader}>
-              <TouchableOpacity onPress={() => setModalVisible(false)}><Ionicons name="close" size={32} color="#fff" /></TouchableOpacity>
-              <Text style={styles.darkHeaderTitle}>Detalhes do Dia</Text>
-              <TouchableOpacity onPress={handleFinalSave} disabled={isSaving}><Text style={styles.saveBtnText}>{isSaving ? "..." : "Salvar"}</Text></TouchableOpacity>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={styles.sectionTitle}>Emoções</Text>
-              <View style={styles.darkCard}>
-                <View style={styles.grid}>{emotionsList.map(i => <SelectableItem key={i.id} item={i} selected={selectedEmotion} onSelect={setSelectedEmotion} />)}</View>
-              </View>
-              <Text style={styles.sectionTitle}>Anotação</Text>
-              <TextInput style={styles.darkInput} multiline value={note} onChangeText={setNote} placeholder="Escreva aqui..." placeholderTextColor="#aaa" />
-            </ScrollView>
-          </SafeAreaView>
-        </LinearGradient>
-      </Modal>
     </LinearGradient>
   );
 }
@@ -343,17 +261,4 @@ const styles = StyleSheet.create({
   dicaHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   dicaTitulo: { fontSize: 18, color: "#FFFFFF", fontWeight: "bold", marginLeft: 10 },
   dicaDescricao: { fontSize: 14, color: "#FFFFFF", opacity: 0.9, lineHeight: 20 },
-  darkContainer: { flex: 1 },
-  darkHeader: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 20, alignItems: "center" },
-  darkHeaderTitle: { color: "#FFFFFF", fontSize: 16, fontFamily: "Manrope-Bold" },
-  saveBtnText: { fontFamily: "Manrope-ExtraBold", fontSize: 18, color: "#CBD83B" },
-  sectionTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold", marginTop: 20, marginBottom: 15 },
-  darkCard: { backgroundColor: "rgba(255, 255, 255, 0.1)", borderRadius: 20, padding: 20 },
-  grid: { flexDirection: "row", flexWrap: "wrap" },
-  iconItem: { alignItems: "center", width: "25%", marginBottom: 15 },
-  iconCircle: { width: 50, height: 50, borderRadius: 25, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center", marginBottom: 5 },
-  iconCircleActive: { backgroundColor: "#A88AED" },
-  iconLabel: { color: "#FFFFFF", fontSize: 11, textAlign: "center" },
-  labelActive: { color: "#A88AED", fontWeight: "bold" },
-  darkInput: { backgroundColor: "rgba(0, 0, 0, 0.4)", borderRadius: 16, padding: 16, color: "#FFFFFF", height: 120, textAlignVertical: "top" },
 });

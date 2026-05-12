@@ -7,8 +7,8 @@ import {
 } from "@expo-google-fonts/manrope";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -68,6 +68,10 @@ const emotionsList = [
   { id: "6", label: "Calmo(a)", icon: "smile" },
   { id: "7", label: "Estressado(a)", icon: "tired" },
   { id: "8", label: "Confiante", icon: "grin" },
+  { id: "9", label: "Frustrado(a)", icon: "angry" },
+  { id: "10", label: "Surpreso(a)", icon: "surprise" },
+  { id: "11", label: "Amado(a)", icon: "kiss-wink-heart" },
+  { id: "12", label: "Cansado(a)", icon: "battery-empty" },
 ];
 
 const sleepList = [
@@ -121,9 +125,19 @@ function SelectableItem({
 // =============================================
 export default function RegistroHoje() {
   const router = useRouter();
+  const { mood } = useLocalSearchParams();
 
   // Estados
   const [selectedMood, setSelectedMood] = useState<any>(null);
+
+  useEffect(() => {
+    if (mood) {
+      const foundMood = mainMoods.find((m) => m.value === mood);
+      if (foundMood) {
+        setSelectedMood(foundMood);
+      }
+    }
+  }, [mood]);
   const [selectedEmotion, setSelectedEmotion] = useState("");
   const [selectedSleep, setSelectedSleep] = useState("");
   const [selectedHealth, setSelectedHealth] = useState("");
@@ -285,88 +299,9 @@ export default function RegistroHoje() {
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
           >
-            {/* ===== SEÇÃO 1: HUMOR PRINCIPAL ===== */}
+            {/* ===== SEÇÃO 1: EMOÇÕES DETALHADAS ===== */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>1. Como você está?</Text>
-              <Text style={styles.sectionHint}>
-                Toque no emoji que melhor descreve seu dia
-              </Text>
-
-              <View style={styles.moodRow}>
-                {mainMoods.map((mood) => {
-                  const isSelected = selectedMood?.value === mood.value;
-                  return (
-                    <TouchableOpacity
-                      key={mood.value}
-                      onPress={() => handleMoodSelect(mood)}
-                      style={styles.moodItem}
-                      activeOpacity={0.75}
-                    >
-                      <Animated.View
-                        style={[
-                          styles.emojiCircle,
-                          {
-                            backgroundColor: mood.color,
-                            borderWidth: isSelected ? 3 : 0,
-                            borderColor: "#fff",
-                            transform: isSelected
-                              ? [{ scale: moodScaleAnim }]
-                              : [{ scale: 1 }],
-                          },
-                        ]}
-                      >
-                        <Image
-                          source={mood.emoji}
-                          style={styles.emojiImage}
-                          resizeMode="contain"
-                        />
-                      </Animated.View>
-                      <Text
-                        style={[
-                          styles.moodLabel,
-                          {
-                            color: isSelected ? mood.color : "rgba(255,255,255,0.7)",
-                            fontFamily: isSelected
-                              ? "Manrope-ExtraBold"
-                              : "Manrope-Regular",
-                          },
-                        ]}
-                      >
-                        {mood.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Badge de confirmação */}
-              {selectedMood && (
-                <View
-                  style={[
-                    styles.selectedBadge,
-                    { backgroundColor: selectedMood.color + "25" },
-                  ]}
-                >
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={16}
-                    color={selectedMood.color}
-                  />
-                  <Text
-                    style={[
-                      styles.selectedBadgeText,
-                      { color: selectedMood.color },
-                    ]}
-                  >
-                    Sentindo-se {selectedMood.label}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* ===== SEÇÃO 2: EMOÇÕES DETALHADAS ===== */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>2. Emoções</Text>
+              <Text style={styles.sectionLabel}>1. Emoções</Text>
               <Text style={styles.sectionHint}>
                 Selecione a que mais combina (opcional)
               </Text>
@@ -384,9 +319,9 @@ export default function RegistroHoje() {
               </View>
             </View>
 
-            {/* ===== SEÇÃO 3: SONO ===== */}
+            {/* ===== SEÇÃO 2: SONO ===== */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>3. Como foi seu sono?</Text>
+              <Text style={styles.sectionLabel}>2. Como foi seu sono?</Text>
               <Text style={styles.sectionHint}>
                 O sono afeta muito o seu humor (opcional)
               </Text>
@@ -426,9 +361,9 @@ export default function RegistroHoje() {
               </View>
             </View>
 
-            {/* ===== SEÇÃO 4: SAÚDE / ATIVIDADES ===== */}
+            {/* ===== SEÇÃO 3: SAÚDE / ATIVIDADES ===== */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>4. Saúde & Atividades</Text>
+              <Text style={styles.sectionLabel}>3. Saúde & Atividades</Text>
               <Text style={styles.sectionHint}>
                 O que você fez de bom por você hoje? (opcional)
               </Text>
@@ -446,9 +381,9 @@ export default function RegistroHoje() {
               </View>
             </View>
 
-            {/* ===== SEÇÃO 5: ANOTAÇÃO ===== */}
+            {/* ===== SEÇÃO 4: ANOTAÇÃO ===== */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>5. Anotação livre</Text>
+              <Text style={styles.sectionLabel}>4. Anotação livre</Text>
               <Text style={styles.sectionHint}>
                 Escreva o que quiser sobre o seu dia (opcional)
               </Text>
@@ -605,7 +540,7 @@ const styles = StyleSheet.create({
 
   // Card escuro base
   darkCard: {
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 20,
     padding: 20,
   },
@@ -621,14 +556,14 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 6,
   },
   iconCircleActive: { backgroundColor: "#CBD83B" },
   iconLabel: {
-    color: "rgba(255,255,255,0.6)",
+    color: "#fff",
     fontSize: 11,
     textAlign: "center",
     fontFamily: "Manrope-Regular",
@@ -642,7 +577,7 @@ const styles = StyleSheet.create({
   sleepRow: { flexDirection: "row", gap: 10 },
   sleepCard: {
     flex: 1,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#fff",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -650,7 +585,7 @@ const styles = StyleSheet.create({
   },
   sleepCardActive: { backgroundColor: "#CBD83B" },
   sleepLabel: {
-    color: "rgba(255,255,255,0.7)",
+    color: "#A88AED",
     fontSize: 11,
     fontFamily: "Manrope-Bold",
     textAlign: "center",

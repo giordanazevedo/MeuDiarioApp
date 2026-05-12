@@ -101,11 +101,11 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 3. BOTÃO CENTRAL (Ajustei o estilo para não empurrar os outros) */}
         <Tabs.Screen
           name="novo"
           options={{
             title: "",
+            tabBarShowLabel: false,
             tabBarIcon: () => (
               <View style={styles.floatingButton}>
                 <Ionicons name="add" size={40} color="#41386B" />
@@ -131,17 +131,23 @@ export default function TabLayout() {
           }}
         />
 
-        {/* 5. CONFIGURAÇÕES (Certifique-se que o nome do arquivo é configuracoes.tsx) */}
+        {/* 5. PERFIL (Abre a tela de configurações) */}
         <Tabs.Screen
-          name="configuracoes"
+          name="perfil"
           options={{
-            title: "Ajustes",
+            title: "Perfil",
             tabBarIcon: ({ color }) => (
-              <Ionicons name="settings-outline" size={24} color={color} />
+              <Ionicons name="person-outline" size={24} color={color} />
             ),
           }}
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              router.push("/configuracoes");
+            },
+          }}
         />
-      </Tabs>{" "}
+      </Tabs>
     </>
   );
 }
@@ -154,9 +160,12 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    // Removi o marginTop e o top, o próprio Tabs vai centralizar se for o 3º item
-    marginBottom: 5,
+    top: -15, // Levanta o botão para ficar flutuando acima da barra
     elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   overlay: {
     flex: 1,
