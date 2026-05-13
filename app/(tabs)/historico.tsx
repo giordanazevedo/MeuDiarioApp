@@ -19,6 +19,7 @@ interface Registro {
   id: string;
   data_criacao: string;
   humor: string;
+  atividades?: string;
   nivel_sono: string;
   nivel_saude: string;
   anotacao?: string;
@@ -169,14 +170,31 @@ export default function HistoricoScreen() {
             <Text style={[styles.moodTitle, { color: humorInfo.color }]}>
               {item.humor} <Text style={styles.timeText}>{horaFormatada}</Text>
             </Text>
-            <View style={styles.tagsRow}>
-              {item.nivel_sono ? (
-                <Text style={styles.tag}>• Sono {item.nivel_sono}</Text>
-              ) : null}
-              {item.nivel_saude ? (
-                <Text style={styles.tag}>• Saúde {item.nivel_saude}</Text>
-              ) : null}
-            </View>
+
+            {/* Emoções / Atividades */}
+            {item.atividades ? (
+              <View style={styles.tagSection}>
+                <Text style={styles.tagLabel}>😊 Emoções:</Text>
+                <Text style={styles.tagValue}>{item.atividades}</Text>
+              </View>
+            ) : null}
+
+            {/* Sono */}
+            {item.nivel_sono ? (
+              <View style={styles.tagSection}>
+                <Text style={styles.tagLabel}>🌙 Sono:</Text>
+                <Text style={styles.tagValue}>{item.nivel_sono}</Text>
+              </View>
+            ) : null}
+
+            {/* Saúde */}
+            {item.nivel_saude ? (
+              <View style={styles.tagSection}>
+                <Text style={styles.tagLabel}>💪 Saúde:</Text>
+                <Text style={styles.tagValue}>{item.nivel_saude}</Text>
+              </View>
+            ) : null}
+
             {item.anotacao ? (
               <Text style={styles.noteText}>{item.anotacao}</Text>
             ) : null}
@@ -258,6 +276,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginRight: 10,
     fontFamily: "Manrope-ExtraBold",
+  },
+  tagSection: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 6,
+    alignItems: "flex-start",
+  },
+  tagLabel: {
+    color: "#41386B",
+    fontSize: 12,
+    fontFamily: "Manrope-ExtraBold",
+    marginRight: 4,
+  },
+  tagValue: {
+    color: "#666",
+    fontSize: 12,
+    fontFamily: "Manrope-ExtraBold",
+    flex: 1,
   },
   noteText: { color: "#555", marginTop: 10, fontFamily: "Manrope-ExtraBold", fontStyle: "italic" },
   emptyText: {

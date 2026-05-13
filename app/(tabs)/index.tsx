@@ -28,7 +28,12 @@ import {
   View,
   RefreshControl,
 } from "react-native";
-import * as Notifications from "expo-notifications";
+// import * as Notifications from "expo-notifications";
+// Mock para evitar crash no Expo Go:
+const Notifications = {
+  getPermissionsAsync: async () => ({ status: "granted" }),
+  requestPermissionsAsync: async () => ({ status: "granted" }),
+};
 import { supabase } from "../../src/supabase";
 
 const { width } = Dimensions.get("window");

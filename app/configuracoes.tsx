@@ -14,7 +14,15 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
-import * as Notifications from "expo-notifications";
+// import * as Notifications from "expo-notifications";
+// Mock para evitar crash no Expo Go:
+const Notifications = {
+  setNotificationHandler: (_handler: any) => { },
+  getPermissionsAsync: async () => ({ status: "granted" }),
+  requestPermissionsAsync: async () => ({ status: "granted" }),
+  cancelAllScheduledNotificationsAsync: async () => { },
+  scheduleNotificationAsync: async (_opts: any) => { },
+};
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Linking from "expo-linking";
@@ -58,11 +66,11 @@ export default function Configuracoes() {
     try {
       const ativado = await AsyncStorage.getItem("@lembrete_ativo");
       const horario = await AsyncStorage.getItem("@lembrete_horario");
-      
+
       if (ativado === "true") {
         setLembreteDiario(true);
       }
-      
+
       if (horario) {
         setHorarioLembrete(new Date(horario));
       } else {
@@ -81,7 +89,7 @@ export default function Configuracoes() {
       const { status: newStatus } = await Notifications.requestPermissionsAsync();
       if (newStatus !== "granted") {
         Alert.alert(
-          "Permissão Negada", 
+          "Permissão Negada",
           "Habilite as notificações nas configurações do celular para receber lembretes."
         );
         setLembreteDiario(false);
@@ -91,7 +99,7 @@ export default function Configuracoes() {
     }
 
     await Notifications.cancelAllScheduledNotificationsAsync();
-    
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Como foi o seu dia hoje? 🌟",
@@ -109,7 +117,7 @@ export default function Configuracoes() {
   const handleToggleLembrete = async (valor: boolean) => {
     setLembreteDiario(valor);
     await AsyncStorage.setItem("@lembrete_ativo", valor ? "true" : "false");
-    
+
     if (valor) {
       await agendarNotificacao(horarioLembrete);
     } else {
@@ -344,33 +352,33 @@ export default function Configuracoes() {
               {lembreteDiario && (
                 <View style={styles.linhaHorario}>
                   <Text style={styles.opcaoTexto}>Horário do Lembrete</Text>
-                  
+
                   {Platform.OS === 'ios' ? (
-                     <DateTimePicker
-                        value={horarioLembrete}
-                        mode="time"
-                        display="default"
-                        themeVariant={isEscuro ? "dark" : "light"}
-                        onChange={onChangeTime}
-                        style={{ width: 100 }}
-                     />
+                    <DateTimePicker
+                      value={horarioLembrete}
+                      mode="time"
+                      display="default"
+                      themeVariant={isEscuro ? "dark" : "light"}
+                      onChange={onChangeTime}
+                      style={{ width: 100 }}
+                    />
                   ) : (
-                     <>
-                        <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.timeBtn}>
-                           <Text style={styles.timeText}>
-                             {horarioLembrete.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                           </Text>
-                        </TouchableOpacity>
-                        {showPicker && (
-                           <DateTimePicker
-                              value={horarioLembrete}
-                              mode="time"
-                              is24Hour={true}
-                              display="default"
-                              onChange={onChangeTime}
-                           />
-                        )}
-                     </>
+                    <>
+                      <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.timeBtn}>
+                        <Text style={styles.timeText}>
+                          {horarioLembrete.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        </Text>
+                      </TouchableOpacity>
+                      {showPicker && (
+                        <DateTimePicker
+                          value={horarioLembrete}
+                          mode="time"
+                          is24Hour={true}
+                          display="default"
+                          onChange={onChangeTime}
+                        />
+                      )}
+                    </>
                   )}
                 </View>
               )}
@@ -494,7 +502,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   timeText: {
-    color: "#CBD83B",
+    color: "#6c0382ff",
     fontSize: 16,
     fontFamily: "Manrope-ExtraBold",
   },

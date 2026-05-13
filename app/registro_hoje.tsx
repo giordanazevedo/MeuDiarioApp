@@ -89,21 +89,21 @@ const healthList = [
 ];
 
 // =============================================
-// COMPONENTE ITEM SELECIONÁVEL
+// COMPONENTE ITEM SELECIONÁVEL (multi-select)
 // =============================================
 function SelectableItem({
   item,
   selected,
-  onSelect,
+  onToggle,
 }: {
   item: { id: string; label: string; icon: string };
-  selected: string;
-  onSelect: (label: string) => void;
+  selected: string[];
+  onToggle: (label: string) => void;
 }) {
-  const isSelected = selected === item.label;
+  const isSelected = selected.includes(item.label);
   return (
     <TouchableOpacity
-      onPress={() => onSelect(item.label)}
+      onPress={() => onToggle(item.label)}
       style={styles.iconItem}
       activeOpacity={0.7}
     >
@@ -139,14 +139,27 @@ export default function RegistroHoje() {
       }
     }
   }, [mood]);
-  const [selectedEmotion, setSelectedEmotion] = useState("");
+  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
   const [selectedSleep, setSelectedSleep] = useState("");
-  const [selectedHealth, setSelectedHealth] = useState("");
+  const [selectedHealthItems, setSelectedHealthItems] = useState<string[]>([]);
+
+  const toggleEmotion = (label: string) => {
+    setSelectedEmotions((prev) =>
+      prev.includes(label) ? prev.filter((e) => e !== label) : [...prev, label]
+    );
+  };
+
+  const toggleHealth = (label: string) => {
+    setSelectedHealthItems((prev) =>
+      prev.includes(label) ? prev.filter((e) => e !== label) : [...prev, label]
+    );
+  };
   const [note, setNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   // Animação do emoji selecionado
   const moodScaleAnim = useRef(new Animated.Value(1)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
 
   let [fontsLoaded] = useFonts({
@@ -202,9 +215,9 @@ export default function RegistroHoje() {
         {
           humor: selectedMood.value,
           user_id: user.id,
-          atividades: selectedEmotion,
+          atividades: selectedEmotions.join(", "),
           nivel_sono: selectedSleep,
-          nivel_saude: selectedHealth,
+          nivel_saude: selectedHealthItems.join(", "),
           anotacao: note,
           data_criacao: new Date().toISOString(),
         },
@@ -297,6 +310,7 @@ export default function RegistroHoje() {
           </View>
 
           <ScrollView
+            ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
@@ -305,7 +319,7 @@ export default function RegistroHoje() {
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>1. Emoções</Text>
               <Text style={styles.sectionHint}>
-                Selecione a que mais combina (opcional)
+                Selecione as que mais combinam (opcional)
               </Text>
               <View style={styles.darkCard}>
                 <View style={styles.grid}>
@@ -313,8 +327,8 @@ export default function RegistroHoje() {
                     <SelectableItem
                       key={item.id}
                       item={item}
-                      selected={selectedEmotion}
-                      onSelect={setSelectedEmotion}
+                      selected={selectedEmotions}
+                      onToggle={toggleEmotion}
                     />
                   ))}
                 </View>
@@ -375,8 +389,8 @@ export default function RegistroHoje() {
                     <SelectableItem
                       key={item.id}
                       item={item}
-                      selected={selectedHealth}
-                      onSelect={setSelectedHealth}
+                      selected={selectedHealthItems}
+                      onToggle={toggleHealth}
                     />
                   ))}
                 </View>
@@ -398,6 +412,11 @@ export default function RegistroHoje() {
                   value={note}
                   onChangeText={setNote}
                   maxLength={500}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 300);
+                  }}
                 />
                 <Text style={styles.charCount}>{note.length}/500</Text>
               </View>
@@ -453,7 +472,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 50,
     paddingBottom: 12,
   },
   backBtn: {
