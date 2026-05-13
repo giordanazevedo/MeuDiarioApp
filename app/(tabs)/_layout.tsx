@@ -52,6 +52,7 @@ function MenuOverlay({
 }
 
 export default function TabLayout() {
+  const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
 
   return (

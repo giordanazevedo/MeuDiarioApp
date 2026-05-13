@@ -25,6 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../src/supabase";
 
 const { width } = Dimensions.get("window");
@@ -146,6 +147,7 @@ export default function RegistroHoje() {
 
   // Animação do emoji selecionado
   const moodScaleAnim = useRef(new Animated.Value(1)).current;
+  const insets = useSafeAreaInsets();
 
   let [fontsLoaded] = useFonts({
     "Manrope-ExtraBold": Manrope_800ExtraBold,
@@ -252,12 +254,12 @@ export default function RegistroHoje() {
       colors={["#41386B", "#A88AED", "#CBD83B"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.container}
+      style={[styles.container, { paddingTop: insets.top }]}
     >
-      <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           {/* ===== CABEÇALHO ===== */}
           <View style={styles.header}>
@@ -430,7 +432,7 @@ export default function RegistroHoje() {
             <View style={{ height: 60 }} />
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </LinearGradient>
   );
 }

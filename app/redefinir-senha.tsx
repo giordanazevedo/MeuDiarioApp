@@ -43,7 +43,7 @@ export default function TelaRedefinirSenha() {
             if (error) throw error;
 
             Alert.alert("Sucesso!", "Sua senha foi alterada.", [
-                { text: "Ir para o Login", onPress: () => router.replace("/") }
+                { text: "Ir para o App", onPress: () => router.replace("/(tabs)") }
             ]);
         } catch (error: any) {
             Alert.alert("Erro", error.message);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert,
   StyleSheet,
@@ -10,25 +10,73 @@ import {
 
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import { supabase } from "../src/supabase";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
 
+  useEffect(() => {
+    // Escuta mudanças no estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          router.replace("/(tabs)");
+        } else if (event === "PASSWORD_RECOVERY") {
+          router.replace("/redefinir-senha");
+        }
+      }
+    );
+
+    // Checa sessão ao abrir o app
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace("/(tabs)");
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   async function handleLogin() {
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
+    setIsLoading(false);
+
+    if (error) {
+      Alert.alert("Erro", error.message);
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!email.trim()) {
+      Alert.alert("Atenção", "Por favor, preencha o campo de e-mail.");
+      return;
+    }
+    
+    setIsLoading(true);
+    const redirectTo = Linking.createURL("/redefinir-senha");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo,
+    });
+    setIsLoading(false);
 
     if (error) {
       Alert.alert("Erro", error.message);
     } else {
-      // CORREÇÃO: Após o login, manda para a tela inicial dentro de (tabs)
-      router.replace("/(tabs)");
+      Alert.alert("E-mail enviado! 📧", "Verifique sua caixa de entrada para redefinir a senha.");
+      setIsForgotPassword(false);
     }
   }
 
@@ -40,10 +88,14 @@ export default function Login() {
       style={styles.container}
     >
       <View style={styles.card}>
-        <Text style={styles.title}>Bem-vindo💜</Text>
+        <Text style={styles.title}>
+          {isForgotPassword ? "Recuperar Senha 🔑" : "Bem-vindo💜"}
+        </Text>
 
         <Text style={styles.subtitle}>
-          Entre na sua conta e organize sua rotina com leveza.
+          {isForgotPassword
+            ? "Digite seu e-mail para enviarmos um link de redefinição."
+            : "Entre na sua conta e organize sua rotina com leveza."}
         </Text>
 
         <TextInput
@@ -55,33 +107,50 @@ export default function Login() {
           style={styles.input}
         />
 
-        <TextInput
-          placeholder="Senha"
-          placeholderTextColor="#8E8AA7"
-          secureTextEntry
-          onChangeText={setPassword}
-          style={styles.input}
-        />
+        {!isForgotPassword && (
+          <TextInput
+            placeholder="Senha"
+            placeholderTextColor="#8E8AA7"
+            secureTextEntry
+            onChangeText={setPassword}
+            style={styles.input}
+          />
+        )}
 
         <TouchableOpacity
           style={styles.button}
-          onPress={handleLogin}
+          onPress={isForgotPassword ? handleResetPassword : handleLogin}
           activeOpacity={0.8}
+          disabled={isLoading}
         >
-          <Text style={styles.buttonText}>Entrar</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#41386B" />
+          ) : (
+            <Text style={styles.buttonText}>
+              {isForgotPassword ? "Enviar Link" : "Entrar"}
+            </Text>
+          )}
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/signup")}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.secondaryButtonText}>Criar nova conta</Text>
-        </TouchableOpacity>
+        {!isForgotPassword ? (
+          <>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push("/signup")}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.secondaryButtonText}>Criar nova conta</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity>
-          <Text style={styles.forgotPassword}>Esqueceu sua senha?</Text>
-        </TouchableOpacity>
+            <TouchableOpacity onPress={() => setIsForgotPassword(true)}>
+              <Text style={styles.forgotPassword}>Esqueceu sua senha?</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity onPress={() => setIsForgotPassword(false)}>
+            <Text style={styles.forgotPassword}>Voltar para o Login</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </LinearGradient>
   );
@@ -188,5 +257,6 @@ const styles = StyleSheet.create({
     color: "#6E6A7E",
     marginTop: 25,
     fontSize: 14,
+    fontWeight: "600",
   },
 });

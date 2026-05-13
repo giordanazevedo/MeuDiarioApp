@@ -28,6 +28,7 @@ import {
   View,
   RefreshControl,
 } from "react-native";
+import * as Notifications from "expo-notifications";
 import { supabase } from "../../src/supabase";
 
 const { width } = Dimensions.get("window");
@@ -61,10 +62,17 @@ interface Registro {
   atividades?: string;
 }
 
+interface Evento {
+  id: string;
+  titulo: string;
+  data_evento: string;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [registros, setRegistros] = useState<Registro[]>([]);
+  const [eventosProximos, setEventosProximos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [totalRegistros, setTotalRegistros] = useState(0);
@@ -125,16 +133,50 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchEventos = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    
+    // Pega o mês atual para mostrar os eventos do mês
+    const mesAtual = new Date().getMonth() + 1;
+    const { data } = await supabase
+      .from("dias_importantes")
+      .select("*")
+      .eq("user_id", user.id);
+
+    if (data) {
+      // Filtra os eventos que vão acontecer nos próximos 30 dias (lógica simplificada para o mês)
+      const eventosFiltrados = data.filter((e) => {
+        const [ano, mes, dia] = e.data_evento.split('-');
+        return parseInt(mes) === mesAtual || parseInt(mes) === (mesAtual === 12 ? 1 : mesAtual + 1);
+      });
+      setEventosProximos(eventosFiltrados);
+    }
+  };
+
+  const solicitarPermissoesNotificacao = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      await Notifications.requestPermissionsAsync();
+    }
+  };
+
   useEffect(() => {
     fetchUserData();
     fetchRegistros();
+    fetchEventos();
+    solicitarPermissoesNotificacao();
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
   }, []);
 
-  useFocusEffect(useCallback(() => { fetchUserData(); fetchRegistros(); }, []));
+  useFocusEffect(useCallback(() => { 
+    fetchUserData(); 
+    fetchRegistros(); 
+    fetchEventos();
+  }, []));
 
   if (!fontsLoaded || loading) {
     return (
@@ -150,7 +192,7 @@ export default function HomeScreen() {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRegistros(); }} tintColor="#fff" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRegistros(); fetchEventos(); }} tintColor="#fff" />}
         >
           <Animated.View style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.headerLeft}>
@@ -162,6 +204,17 @@ export default function HomeScreen() {
               <Ionicons name="person-circle-outline" size={42} color="#fff" />
             </TouchableOpacity>
           </Animated.View>
+          {/* AVISO DE EVENTO PRÓXIMO */}
+          {eventosProximos.length > 0 && (
+            <TouchableOpacity style={styles.bannerEvento} onPress={() => router.push("/(tabs)/calendario")}>
+              <Ionicons name="calendar" size={24} color="#41386B" />
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.eventoTitulo}>Eventos chegando! 🎉</Text>
+                <Text style={styles.eventoDesc}>Você tem {eventosProximos.length} dia(s) importante(s) anotado(s) pra este mês.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#41386B" />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.quoteCard}>
             <Text style={styles.quoteText}>"{fraseHoje.texto}"</Text>
@@ -236,6 +289,17 @@ const styles = StyleSheet.create({
   saudacao: { fontSize: 16, color: "#FFFFFF", opacity: 0.9 },
   nomeUsuario: { fontSize: 28, color: "#FFFFFF", fontFamily: "Manrope-ExtraBold" },
   dataHoje: { fontSize: 14, color: "#CBD83B", fontFamily: "Manrope-Bold" },
+  bannerEvento: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.85)",
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    elevation: 3,
+  },
+  eventoTitulo: { fontSize: 16, color: "#41386B", fontFamily: "Manrope-ExtraBold" },
+  eventoDesc: { fontSize: 12, color: "#41386B", marginTop: 2, fontFamily: "Manrope-Bold" },
   quoteCard: { backgroundColor: "rgba(30, 25, 55, 0.95)", borderRadius: 20, padding: 20, marginBottom: 20, borderLeftWidth: 4, borderLeftColor: "#CBD83B" },
   quoteText: { fontSize: 16, color: "#FFFFFF", fontFamily: "Manrope-Bold", fontStyle: "italic", lineHeight: 22 },
   quoteAuthor: { fontSize: 12, color: "#CBD83B", textAlign: "right", marginTop: 10 },
