@@ -6,6 +6,7 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Switch,
   Text,
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
   botaoVoltar: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 40) + 10 : 20,
     marginBottom: 10,
     gap: 8,
   },

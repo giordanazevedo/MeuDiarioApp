@@ -3,8 +3,10 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
   centralizar: { flex: 1, justifyContent: "center", alignItems: "center" },
   textoCarregando: { marginTop: 10, color: "#fff", fontFamily: "Manrope-ExtraBold" },
   header: {
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 40) + 10 : 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
   },

@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import {
+  ActivityIndicator,
   Alert,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -87,6 +89,11 @@ export default function Login() {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
+      <Image
+        source={require("../assets/images/logoapp.jpeg")}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <View style={styles.card}>
         <Text style={styles.title}>
           {isForgotPassword ? "Recuperar Senha 🔑" : "Bem-vindo💜"}
@@ -162,7 +169,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
-
+  logo: {
+    width: 120,
+    height: 120,
+    alignSelf: "center",
+    marginBottom: 20,
+    borderRadius: 60, // Opcional: para deixar redondo se for quadrado
+  },
   card: {
     backgroundColor: "#FFFCEC",
     borderRadius: 30,

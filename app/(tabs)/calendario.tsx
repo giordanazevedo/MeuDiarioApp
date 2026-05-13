@@ -13,7 +13,9 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -235,7 +237,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 40) + 10 : 20,
     paddingBottom: 16,
   },
   headerTitle: {

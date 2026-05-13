@@ -13,6 +13,7 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -190,7 +191,7 @@ export default function NovoDiaImportante() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24, paddingTop: 20, alignItems: "center" },
+  content: { padding: 24, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 40) + 10 : 20, alignItems: "center" },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",

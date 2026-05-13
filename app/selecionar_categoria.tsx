@@ -4,8 +4,10 @@ import { useRouter } from "expo-router";
 import React from "react";
 import {
   Alert,
+  Platform,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -88,7 +90,7 @@ export default function SelecionarCategoria() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { padding: 24, paddingTop: 60 },
+  scrollContent: { padding: 24, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 40) + 20 : 60 },
   backButton: { marginBottom: 20 },
   title: {
     color: "#fff",
