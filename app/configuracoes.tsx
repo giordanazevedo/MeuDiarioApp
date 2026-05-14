@@ -38,7 +38,7 @@ export default function Configuracoes() {
     "Manrope-ExtraBold": Manrope_800ExtraBold,
   });
 
-  const [tema, setTema] = useState<"claro" | "escuro">("escuro"); // Padrão escuro para combinar com o tema
+
   const [lembreteDiario, setLembreteDiario] = useState(false);
   const [horarioLembrete, setHorarioLembrete] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -195,7 +195,7 @@ export default function Configuracoes() {
     ]);
   };
 
-  const isEscuro = tema === "escuro";
+
 
   if (!fontsLoaded) return null;
 
@@ -218,13 +218,13 @@ export default function Configuracoes() {
             <Ionicons name="arrow-back" size={24} color="#fff" />
             <Text style={styles.textoVoltar}>Voltar</Text>
           </TouchableOpacity>
-          <Text style={[styles.mainTitle, isEscuro && styles.textoBranco]}>
+          <Text style={[styles.mainTitle, styles.textoBranco]}>
             Configurações
           </Text>
 
           {/* 1. PERFIL E CONTA */}
           <View style={styles.secao}>
-            <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
+            <Text style={[styles.tituloSecao, styles.textoBranco]}>
               1. Perfil e Conta
             </Text>
 
@@ -279,61 +279,11 @@ export default function Configuracoes() {
             </TouchableOpacity>
           </View>
 
-          {/* 2. APARÊNCIA */}
-          <View style={styles.secao}>
-            <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
-              2. Aparência
-            </Text>
-            <View style={styles.card}>
-              <Text style={styles.opcaoTexto}>
-                Tema do Aplicativo
-              </Text>
-              <View style={styles.botoesTema}>
-                <TouchableOpacity
-                  style={[styles.botaoTema, !isEscuro && styles.botaoAtivoClaro]}
-                  onPress={() => setTema("claro")}
-                >
-                  <Ionicons
-                    name="sunny"
-                    size={20}
-                    color={!isEscuro ? "#fff" : "#666"}
-                  />
-                  <Text
-                    style={[
-                      styles.textoBotao,
-                      !isEscuro && styles.textoBotaoAtivo,
-                    ]}
-                  >
-                    Claro
-                  </Text>
-                </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.botaoTema, isEscuro && styles.botaoAtivoEscuro]}
-                  onPress={() => setTema("escuro")}
-                >
-                  <Ionicons
-                    name="moon"
-                    size={20}
-                    color={isEscuro ? "#fff" : "#666"}
-                  />
-                  <Text
-                    style={[
-                      styles.textoBotao,
-                      isEscuro && styles.textoBotaoAtivo,
-                    ]}
-                  >
-                    Escuro
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
 
-          {/* 3. PREFERÊNCIAS */}
           <View style={styles.secao}>
-            <Text style={[styles.tituloSecao, isEscuro && styles.textoBranco]}>
-              3. Preferências
+            <Text style={[styles.tituloSecao, styles.textoBranco]}>
+              2. Preferências
             </Text>
             <View style={styles.card}>
               <View style={styles.linhaSwitch}>
@@ -356,7 +306,7 @@ export default function Configuracoes() {
                       value={horarioLembrete}
                       mode="time"
                       display="default"
-                      themeVariant={isEscuro ? "dark" : "light"}
+                      themeVariant="dark"
                       onChange={onChangeTime}
                       style={{ width: 100 }}
                     />
@@ -383,7 +333,7 @@ export default function Configuracoes() {
             </View>
           </View>
 
-          {/* 4. SAIR */}
+          {/* SEÇÃO SAIR */}
           <View style={styles.secao}>
             <TouchableOpacity
               style={styles.botaoSairContainer}
@@ -392,7 +342,7 @@ export default function Configuracoes() {
               <Ionicons name="log-out-outline" size={22} color="#FF3B30" />
               <Text style={styles.textoSair}>Sair da Conta</Text>
             </TouchableOpacity>
-            <Text style={styles.versao}>Versão 1.2.0 • Diário Emocional</Text>
+            <Text style={styles.versao}>Versão 1.2.0 • LUME</Text>
           </View>
         </ScrollView>
       </SafeAreaView>

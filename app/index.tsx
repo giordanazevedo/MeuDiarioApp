@@ -90,7 +90,7 @@ export default function Login() {
       style={styles.container}
     >
       <Image
-        source={require("../assets/images/logoapp.png")}
+        source={require("../assets/images/logoappcapa.png")}
         style={styles.logo}
         resizeMode="contain"
       />

@@ -11,6 +11,8 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    "src/supabase.js"
+    "src/supabase.js",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ]
 }
