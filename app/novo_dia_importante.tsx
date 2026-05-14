@@ -21,6 +21,7 @@ import {
   View,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as Notifications from "expo-notifications";
 import { supabase } from "../src/supabase";
 
 export default function NovoDiaImportante() {
@@ -81,7 +82,41 @@ export default function NovoDiaImportante() {
       if (error) {
         Alert.alert("Erro ao salvar", error.message);
       } else {
-        Alert.alert("Adicionado! ✨", "Dia importante salvo na sua agenda.", [
+        // Agendar notificação para o dia do evento
+        try {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status !== "granted") {
+            await Notifications.requestPermissionsAsync();
+          }
+
+          const dataEvento = new Date(data);
+          const agora = new Date();
+
+          // Agenda notificação para 9h da manhã no dia do evento
+          if (dataEvento > agora) {
+            const triggerDate = new Date(dataEvento);
+            triggerDate.setHours(9, 0, 0, 0);
+
+            // Só agenda se a data do trigger for no futuro
+            if (triggerDate > agora) {
+              await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: `${catString} - Hoje é o dia! 🎉`,
+                  body: `Lembrete: ${titulo.trim()}`,
+                  sound: true,
+                },
+                trigger: {
+                  type: Notifications.SchedulableTriggerInputTypes.DATE,
+                  date: triggerDate,
+                },
+              });
+            }
+          }
+        } catch (notifError) {
+          console.log("Erro ao agendar notificação do evento:", notifError);
+        }
+
+        Alert.alert("Adicionado! ✨", "Dia importante salvo na sua agenda com lembrete! 🔔", [
           {
             text: "Ver Agenda",
             onPress: () => router.replace("/(tabs)/calendario"),

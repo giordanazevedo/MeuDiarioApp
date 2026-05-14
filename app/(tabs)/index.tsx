@@ -141,7 +141,7 @@ export default function HomeScreen() {
   const fetchEventos = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    
+
     // Pega o mês atual para mostrar os eventos do mês
     const mesAtual = new Date().getMonth() + 1;
     const { data } = await supabase
@@ -177,9 +177,9 @@ export default function HomeScreen() {
     ]).start();
   }, []);
 
-  useFocusEffect(useCallback(() => { 
-    fetchUserData(); 
-    fetchRegistros(); 
+  useFocusEffect(useCallback(() => {
+    fetchUserData();
+    fetchRegistros();
     fetchEventos();
   }, []));
 

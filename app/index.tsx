@@ -66,7 +66,7 @@ export default function Login() {
       Alert.alert("Atenção", "Por favor, preencha o campo de e-mail.");
       return;
     }
-    
+
     setIsLoading(true);
     const redirectTo = Linking.createURL("/redefinir-senha");
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -90,7 +90,7 @@ export default function Login() {
       style={styles.container}
     >
       <Image
-        source={require("../assets/images/logoapp.jpeg")}
+        source={require("../assets/images/logoapp.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -174,7 +174,11 @@ const styles = StyleSheet.create({
     height: 120,
     alignSelf: "center",
     marginBottom: 20,
-    borderRadius: 60, // Opcional: para deixar redondo se for quadrado
+    backgroundColor: "transparent",
+    // Removendo qualquer sombra indesejada
+    shadowColor: "transparent",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   card: {
     backgroundColor: "#FFFCEC",
