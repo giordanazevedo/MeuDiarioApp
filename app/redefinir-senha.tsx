@@ -12,6 +12,7 @@ import {
     View
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Linking from "expo-linking";
 import { supabase } from "../src/supabase"; // Verifique se o caminho está correto
 
 export default function TelaRedefinirSenha() {
@@ -22,22 +23,95 @@ export default function TelaRedefinirSenha() {
     const [sessaoAtiva, setSessaoAtiva] = useState(false);
 
     useEffect(() => {
-        const checarSessao = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                Alert.alert(
-                    "Sessão não encontrada",
-                    "Link de recuperação inválido ou expirado. Por favor, solicite uma nova recuperação de senha.",
-                    [{ text: "Voltar para o Login", onPress: () => router.replace("/") }]
-                );
-                setSessaoAtiva(false);
-            } else {
-                setSessaoAtiva(true);
+        let montado = true;
+        setCarregando(true);
+
+        // Função para extrair tokens da URL (útil para links que vem com #access_token=...)
+        const extrairTokensDaUrl = async (url: string | null) => {
+            if (!url || !url.includes("#")) return;
+            
+            console.log("Tentando extrair tokens da URL...");
+            const hash = url.split("#")[1];
+            const partes = hash.split("&");
+            const params: { [key: string]: string } = {};
+            
+            partes.forEach(p => {
+                const [chave, valor] = p.split("=");
+                params[chave] = valor;
+            });
+
+            if (params.access_token && params.refresh_token) {
+                console.log("Tokens encontrados! Definindo sessão manualmente...");
+                const { data, error } = await supabase.auth.setSession({
+                    access_token: params.access_token,
+                    refresh_token: params.refresh_token,
+                });
+                
+                if (!error && data.session && montado) {
+                    setSessaoAtiva(true);
+                    setCarregando(false);
+                }
             }
         };
 
-        checarSessao();
+        // Escuta mudanças de autenticação
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log("Redefinir Senha - Evento:", event, session ? "Sessão OK" : "Sem sessão");
+            if (session && montado) {
+                setSessaoAtiva(true);
+                setCarregando(false);
+            }
+        });
+
+        const inicializar = async () => {
+            // 1. Tenta pegar a URL inicial e extrair tokens
+            const urlInicial = await Linking.getInitialURL();
+            await extrairTokensDaUrl(urlInicial);
+
+            // 2. Checa se já temos sessão (seja pelo passo 1 ou pelo Supabase automático)
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                if (montado) {
+                    setSessaoAtiva(true);
+                    setCarregando(false);
+                }
+            } else {
+                console.log("Sessão ainda não encontrada, aguardando...");
+                // Aguarda um pouco mais
+                setTimeout(async () => {
+                    if (montado) {
+                        const { data: { session: finalSession } } = await supabase.auth.getSession();
+                        if (!finalSession && !sessaoAtiva) {
+                            setCarregando(false);
+                            Alert.alert(
+                                "Link de Recuperação",
+                                "Não conseguimos validar seu acesso. Isso pode acontecer se o link expirou ou já foi usado. Tente solicitar um novo e-mail.",
+                                [{ text: "Voltar para o Login", onPress: () => router.replace("/") }]
+                            );
+                        } else if (finalSession) {
+                            setSessaoAtiva(true);
+                            setCarregando(false);
+                        }
+                    }
+                }, 4000);
+            }
+        };
+
+        inicializar();
+
+        // Escuta se uma nova URL chegar com o app aberto
+        const urlSubscription = Linking.addEventListener("url", (event) => {
+            extrairTokensDaUrl(event.url);
+        });
+
+        return () => {
+            montado = false;
+            subscription.unsubscribe();
+            urlSubscription.remove();
+        };
     }, []);
+
 
     const atualizarSenha = async () => {
         // 1. Validações básicas

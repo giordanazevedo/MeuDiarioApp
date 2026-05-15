@@ -10,9 +10,10 @@ Este projeto foi desenvolvido como parte dos requisitos da disciplina de Desenvo
 
 | Integrante | Componentes/Responsabilidades |
 | :--- | :--- |
-| **Giordana Azevedo** | Arquitetura, Integração com Supabase, Telas de Login e Configurações |
-| **Membro 2** | Implementação da Tela Principal e Listagem (FlatList) |
-| **Membro 3** | Tela de Registro de Atividades e Design Visual (Flexbox) |
+| **Giordana Azevedo** | Arquitetura, Integração com Supabase, sistema de notificações |
+| **Joao** | Implementação da Tela Principal e Listagem (FlatList) |
+ **Ericka** | Login e signup
+| **Ericka** | Tela de Registro de Atividades e Design Visual (Flexbox) |
 | **Membro 4** | Sistema de Notificações Locais e Detalhes de Registro |
 | **Membro 5** | Documentação, Testes e Refatoração de Código |
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,8 +11,8 @@ import {
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import * as Linking from "expo-linking";
+import { useRouter } from "expo-router";
 import { supabase } from "../src/supabase";
 
 export default function Login() {
@@ -27,11 +27,25 @@ export default function Login() {
   useEffect(() => {
     // Escuta mudanças no estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === "SIGNED_IN" && session) {
-          router.replace("/(tabs)");
-        } else if (event === "PASSWORD_RECOVERY") {
+      async (event, session) => {
+        console.log("Auth Event:", event);
+
+        if (event === "PASSWORD_RECOVERY") {
+          console.log("Evento de recuperação detectado, indo para redefinir-senha");
           router.replace("/redefinir-senha");
+        } else if (event === "SIGNED_IN" && session) {
+          // Pequeno delay para garantir que se houver um evento PASSWORD_RECOVERY vindo junto,
+          // ele tenha prioridade ou que a navegação não seja interrompida
+          const url = await Linking.getInitialURL();
+          const isRecovery = url?.includes("type=recovery") || url?.includes("redefinir-senha");
+
+          if (isRecovery) {
+            console.log("SIGNED_IN detectado mas parece ser um fluxo de recuperação, ignorando redirect para tabs");
+            return;
+          }
+
+          console.log("Login realizado com sucesso, indo para tabs");
+          router.replace("/(tabs)");
         }
       }
     );
@@ -39,7 +53,15 @@ export default function Login() {
     // Checa sessão ao abrir o app
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        router.replace("/(tabs)");
+        // Verifica se a URL atual contém indícios de recuperação de senha
+        // Se contiver, não redirecionamos para /tabs aqui, deixamos o onAuthStateChange cuidar disso
+        Linking.getInitialURL().then(url => {
+          if (url && (url.includes("type=recovery") || url.includes("redefinir-senha"))) {
+            console.log("Detectado link de recuperação no início, aguardando...");
+            return;
+          }
+          router.replace("/(tabs)");
+        });
       }
     });
 
@@ -47,6 +69,8 @@ export default function Login() {
       subscription.unsubscribe();
     };
   }, []);
+
+
 
   async function handleLogin() {
     setIsLoading(true);
@@ -69,6 +93,8 @@ export default function Login() {
 
     setIsLoading(true);
     const redirectTo = Linking.createURL("redefinir-senha", { scheme: "lume" });
+    console.log("Solicitando reset de senha. RedirectTo:", redirectTo);
+
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo,
     });
@@ -90,7 +116,7 @@ export default function Login() {
       style={styles.container}
     >
       <Image
-        source={require("../assets/images/logoapp.png")}
+        source={require("../assets/images/logoappcapa.png")}
         style={styles.logo}
         resizeMode="contain"
       />

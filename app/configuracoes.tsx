@@ -1,8 +1,16 @@
+//ana clara
+import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Linking from "expo-linking";
+import * as Notifications from "expo-notifications";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   Alert,
+  Button,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -12,14 +20,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Button,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
-import * as Notifications from "expo-notifications";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import * as Linking from "expo-linking";
 import { supabase } from "../src/supabase";
 
 Notifications.setNotificationHandler({
@@ -157,17 +158,27 @@ export default function Configuracoes() {
 
   const alterarSenha = async () => {
     try {
-      const redirectTo = Linking.createURL("/redefinir-senha");
+      if (!usuarioLogado.email) {
+        Alert.alert("Erro", "E-mail do usuário não encontrado.");
+        return;
+      }
+
+      // Usando a mesma lógica da tela de login que é mais robusta
+      const redirectTo = Linking.createURL("redefinir-senha", { scheme: "lume" });
+      
       const { error } = await supabase.auth.resetPasswordForEmail(
         usuarioLogado.email,
         { redirectTo },
       );
+      
       if (error) throw error;
       Alert.alert("E-mail enviado! 📧", "Verifique sua caixa de entrada.");
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível enviar o e-mail.");
+    } catch (error: any) {
+      console.error("Erro ao enviar e-mail:", error);
+      Alert.alert("Erro", error.message || "Não foi possível enviar o e-mail.");
     }
   };
+
 
   const fazerLogout = async () => {
     Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
@@ -344,13 +355,7 @@ export default function Configuracoes() {
               <Text style={styles.textoSair}>Sair da Conta</Text>
             </TouchableOpacity>
 
-            <View style={{ marginTop: 20 }}>
-              <Button
-                title="Ajuda e Suporte"
-                onPress={() => Alert.alert("Suporte", "Para ajuda, entre em contato com o suporte do LUME.")}
-                color="#A88AED"
-              />
-            </View>
+
 
             <Text style={styles.versao}>Versão 1.2.0 • LUME</Text>
           </View>
