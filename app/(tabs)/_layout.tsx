@@ -3,7 +3,7 @@ import { Tabs, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-// Componente do Menu (Simples e funcional)
+// Componente do Menu flutuante
 function MenuOverlay({
   visible,
   onClose,
@@ -17,7 +17,7 @@ function MenuOverlay({
     onClose();
     router.push(rota as any);
   };
-
+  //•	transparent={true}: Permite que vejamos o fundo levemente atrás do menu.
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>

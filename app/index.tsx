@@ -68,7 +68,7 @@ export default function Login() {
     }
 
     setIsLoading(true);
-    const redirectTo = Linking.createURL("/redefinir-senha");
+    const redirectTo = Linking.createURL("redefinir-senha", { scheme: "lume" });
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo,
     });
@@ -90,7 +90,7 @@ export default function Login() {
       style={styles.container}
     >
       <Image
-        source={require("../assets/images/logoappcapa.png")}
+        source={require("../assets/images/logoapp.png")}
         style={styles.logo}
         resizeMode="contain"
       />

@@ -12,6 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Button,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Manrope_800ExtraBold, useFonts } from "@expo-google-fonts/manrope";
@@ -342,6 +343,15 @@ export default function Configuracoes() {
               <Ionicons name="log-out-outline" size={22} color="#FF3B30" />
               <Text style={styles.textoSair}>Sair da Conta</Text>
             </TouchableOpacity>
+
+            <View style={{ marginTop: 20 }}>
+              <Button
+                title="Ajuda e Suporte"
+                onPress={() => Alert.alert("Suporte", "Para ajuda, entre em contato com o suporte do LUME.")}
+                color="#A88AED"
+              />
+            </View>
+
             <Text style={styles.versao}>Versão 1.2.0 • LUME</Text>
           </View>
         </ScrollView>
